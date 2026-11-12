@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { readCollection } from "../lib/database";
+import { afterAll, describe, expect, it } from "vitest";
+import { closeDatabase, readCollection } from "../lib/database";
+
+afterAll(() => {
+  closeDatabase();
+});
 
 describe("SQLite data layer", () => {
   it("migrates the seed profiles into SQLite", () => {

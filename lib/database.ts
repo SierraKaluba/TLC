@@ -69,6 +69,12 @@ export function readCollection<T>(collection: string): T[] {
   return rows.map((row) => JSON.parse(row.data) as T);
 }
 
+export function closeDatabase() {
+  if (!database) return;
+  database.close();
+  database = undefined;
+}
+
 export function appendRecord<T extends { id?: string }>(
   collection: string,
   item: T,
