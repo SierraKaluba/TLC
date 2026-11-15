@@ -21,12 +21,7 @@ databaseModule.filename = databaseSourcePath;
 databaseModule.paths = Module._nodeModulePaths(path.dirname(databaseSourcePath));
 databaseModule._compile(outputText, databaseSourcePath);
 
-const { closeDatabase, readCollection } = databaseModule.exports;
-
-try {
-  const profiles = readCollection("profiles");
-  assert.ok(profiles.some((profile) => profile.id === "user-alice"), "SQLite should include the seeded user-alice profile");
-  console.log("SQLite data layer test passed");
-} finally {
-  closeDatabase();
-}
+const { readCollection } = databaseModule.exports;
+const profiles = readCollection("profiles");
+assert.ok(profiles.some((profile) => profile.id === "user-alice"), "SQLite should include the seeded user-alice profile");
+console.log("SQLite data layer test passed");
