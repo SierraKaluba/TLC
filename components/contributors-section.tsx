@@ -1,33 +1,21 @@
 import Link from "next/link";
+import type { Contributor } from "@/lib/types";
 
-const contributors = [
-  { name: "Contributor 1", github: "https://github.com/contributor1", avatar: "https://i.pravatar.cc/100?img=1" },
-  { name: "Contributor 2", github: "https://github.com/contributor2", avatar: "https://i.pravatar.cc/100?img=2" },
-  { name: "Contributor 3", github: "https://github.com/contributor3", avatar: "https://i.pravatar.cc/100?img=3" },
-  { name: "Contributor 4", github: "https://github.com/contributor4", avatar: "https://i.pravatar.cc/100?img=4" },
-  { name: "Contributor 5", github: "https://github.com/contributor5", avatar: "https://i.pravatar.cc/100?img=5" },
-  { name: "Contributor 6", github: "https://github.com/contributor6", avatar: "https://i.pravatar.cc/100?img=6" },
-  { name: "Contributor 7", github: "https://github.com/contributor7", avatar: "https://i.pravatar.cc/100?img=7" },
-  { name: "Contributor 8", github: "https://github.com/contributor8", avatar: "https://i.pravatar.cc/100?img=8" },
-  { name: "Contributor 9", github: "https://github.com/contributor9", avatar: "https://i.pravatar.cc/100?img=9" },
-  { name: "Contributor 10", github: "https://github.com/contributor10", avatar: "https://i.pravatar.cc/100?img=10" },
-];
-
-const ContributorsSection = () => {
+const ContributorsSection = ({ contributors }: { contributors: Contributor[] }) => {
   return (
     <section className="py-12 md:py-16 bg-gradient-to-b from-[#06142d] via-[#0a1f2e] to-[#06142d] border-b border-[#d4af37]/10">
       <div className="mx-auto max-w-6xl px-4">
         <div className="text-center mb-8">
           <h3 className="text-2xl font-semibold text-white">Soutenus par</h3>
           <p className="text-slate-300 mt-2">
-            Backed by Vercel et countless donors, developed by full-time and part-time maintainers, Svelte is here to stay.
+            Soutenu par d’innombrables donateurs, développé par des mainteneurs à temps plein et à temps partiel, TLC est là pour durer.
           </p>
         </div>
 
         <div className="flex flex-wrap justify-center items-center gap-3 md:gap-4">
           {contributors.map((contributor) => (
             <Link
-              key={contributor.name}
+              key={contributor.id}
               href={contributor.github}
               target="_blank"
               rel="noopener noreferrer"

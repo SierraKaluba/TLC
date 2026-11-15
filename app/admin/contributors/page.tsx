@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
+import ImportButton from '@/components/admin/ImportButton'
 
 type Contributor = {
   id: string
@@ -126,33 +127,39 @@ export default function AdminContributorsPage() {
 
   const avatarPreview = github ? `${github.replace(/\/$/, '')}.png` : ''
 
-  function logout() {
-    // clear cookie and reload
-    document.cookie = 'tlc_admin=; Max-Age=0; path=/;'
-    window.location.reload()
+  async function logout() {
+    await fetch('/api/admin/logout', { method: 'POST' })
+    setAuth(false)
+    setItems([])
+    setPassword('')
+    setEditingId(null)
+    setName('')
+    setGithub('')
   }
 
   return (
-    <main className="content-shell py-10">
-      <div className="max-w-6xl mx-auto">
+    <main className="py-2 sm:py-4">
+      <div className="mx-auto max-w-6xl space-y-7">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Gestion des contributeurs</h1>
-            <p className="text-slate-300 mt-1">Ajouter ou supprimer les profils affichés sur la page d'accueil.</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#d4af37]">Communauté</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Contributeurs</h1>
+            <p className="mt-2 text-sm text-slate-400">Cette liste est affichée sur la page d’accueil.</p>
           </div>
           <div className="flex items-center gap-3">
+            <ImportButton type="contributors" sample={{ name: '', github: 'https://github.com/', avatar: '' }} onImported={fetchItems} />
             <button onClick={logout} className="rounded-md bg-white/5 px-3 py-2 text-sm text-white">Déconnexion</button>
           </div>
         </div>
 
         <div className="mt-6 grid gap-6 md:grid-cols-3">
-          <div className="md:col-span-1 rounded-2xl border border-white/8 bg-gradient-to-b from-[#071428]/60 to-[#06142d]/60 p-5">
-            <h2 className="text-lg font-semibold text-white">{editingId ? 'Modifier un contributeur' : 'Ajouter un contributeur'}</h2>
-            <p className="text-sm text-slate-300 mt-1">Entrez le nom et l'URL GitHub. L'avatar sera déduit si absent.</p>
+          <div className="md:col-span-1 rounded-2xl border border-white/[0.08] bg-[#0b1827] p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-white">{editingId ? 'Modifier le profil' : 'Ajouter un profil'}</h2>
+            <p className="mt-1 text-sm text-slate-400">Le profil sera visible sur l’accueil après enregistrement.</p>
 
             <form onSubmit={addContributor} className="mt-4 space-y-3">
-              <input value={name} onChange={e=>setName(e.target.value)} placeholder="Nom" className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white" />
-              <input value={github} onChange={e=>setGithub(e.target.value)} placeholder="https://github.com/username" className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white" />
+              <label className="block text-xs font-medium text-slate-400">Nom affiché<input required value={name} onChange={e=>setName(e.target.value)} placeholder="Ex. Alex Martin" className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#07111f] px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-[#d4af37]/60 focus:ring-2 focus:ring-[#d4af37]/10" /></label>
+              <label className="block text-xs font-medium text-slate-400">Profil GitHub<input required type="url" value={github} onChange={e=>setGithub(e.target.value)} placeholder="https://github.com/username" className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#07111f] px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-[#d4af37]/60 focus:ring-2 focus:ring-[#d4af37]/10" /></label>
 
               <div className="flex items-center gap-3">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-white/5 flex items-center justify-center">
@@ -173,8 +180,8 @@ export default function AdminContributorsPage() {
             </form>
           </div>
 
-          <div className="md:col-span-2 rounded-2xl border border-white/8 bg-gradient-to-b from-[#071428]/40 to-[#06142d]/40 p-5">
-            <h2 className="text-lg font-semibold text-white">Contributeurs actifs</h2>
+          <div className="md:col-span-2 rounded-2xl border border-white/[0.08] bg-[#0b1827] p-5 sm:p-6">
+            <div className="flex items-center justify-between"><div><h2 className="text-lg font-semibold text-white">Sur la plateforme</h2><p className="mt-1 text-xs text-slate-500">{items.length} profil{items.length === 1 ? '' : 's'}</p></div><span className="rounded-full border border-emerald-300/15 bg-emerald-300/[0.07] px-2.5 py-1 text-[11px] text-emerald-200">Synchronisé</span></div>
             <div className="mt-4">
               <div className="flex items-center gap-3 mb-4">
                 <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher par nom ou pseudo" className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white" />

@@ -2,18 +2,31 @@ import HeroSection from "@/components/hero-section"
 import CommunityVision from "@/components/community-vision"
 import CommunitySection from "@/components/community-section"
 import ContributorsSection from "@/components/contributors-section"
+import { readCollection } from "@/lib/database"
+import type { Contributor } from "@/lib/types"
 import { Bot, ChartSpline, GitBranchPlus, Radar } from "lucide-react"
+import experiments from "@/data/experiments.json"
+import resources from "@/data/resources.json"
+
+export const dynamic = "force-dynamic"
 
 const HomePage = () => {
+  const contributors = readCollection<Contributor>("contributors")
   return (
     <div className="home-hero-bg">
-      <HeroSection />
+      <HeroSection
+        stats={{
+          experiments: experiments.length,
+          contributors: contributors.length,
+          resources: resources.length,
+        }}
+      />
 
       <CommunityVision />
 
       <CommunitySection />
 
-      <ContributorsSection />
+      <ContributorsSection contributors={contributors} />
 
       <section className="content-shell pb-20 pt-16">
         <div className="content-header text-left md:text-center">
