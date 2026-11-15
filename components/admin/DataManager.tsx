@@ -1,218 +1,225 @@
-"use client"
-import { useEffect, useState } from 'react'
+"use client";
 
-type Item = {
-  id?: string
-  title?: string
-  name?: string
-  [key: string]: unknown
-}
+import { useEffect, useState } from "react";
+import ImportButton from "@/components/admin/ImportButton";
 
-const TYPE_HELP: Record<string, { title: string; expected: string; tips: string[]; template: Item }> = {
-  contributors: {
-    title: 'Contributeurs',
-    expected: 'Champs recommandes: name, github, avatar (optionnel).',
-    tips: [
-      'Utiliser une URL GitHub valide (https://github.com/username).',
-      'L avatar peut etre derive automatiquement depuis github + .png.',
-    ],
-    template: { name: '', github: 'https://github.com/', avatar: '' },
-  },
-  profiles: {
-    title: 'Profils communaute',
-    expected: 'Champs recommandes: name, role, skills[], points, projects.',
-    tips: [
-      'skills doit etre un tableau de competences.',
-      'points et projects doivent etre des nombres.',
-    ],
-    template: { name: '', role: '', skills: [], points: 0, projects: 0 },
-  },
-  projects: {
-    title: 'Projets',
-    expected: 'Champs recommandes: title, description, members[], tasks[].',
-    tips: [
-      'Chaque tache peut contenir: id, title, done.',
-      'members doit etre une liste d identifiants ou noms courts.',
-    ],
-    template: { title: '', description: '', members: [], tasks: [{ id: 't1', title: '', done: false }] },
-  },
-  events: {
-    title: 'Evenements',
-    expected: 'Champs recommandes: title, date, type, description.',
-    tips: [
-      'Format date recommande: YYYY-MM-DD.',
-      'type ex: Workshop, Webinaire, Hackathon.',
-    ],
-    template: { title: '', date: '2026-01-01', type: 'Workshop', description: '' },
-  },
-  resources: {
-    title: 'Ressources',
-    expected: 'Champs recommandes: title, category, url.',
-    tips: [
-      'Eviter url="#" sur la plateforme en production.',
-      'category ex: Documentation, Code, Donnees, Recherche.',
-    ],
-    template: { title: '', category: 'Documentation', url: 'https://example.com' },
-  },
-  experiments: {
-    title: 'Experiences',
-    expected: 'Champs recommandes: title, notes.',
-    tips: [
-      'Ajouter des notes claires pour expliquer le contexte test.',
-      'Inclure une conclusion ou etat si possible.',
-    ],
-    template: { title: '', notes: '' },
-  },
-  'open-calls': {
-    title: 'Appels ouverts',
-    expected: 'Champs recommandes: title, description, urgency.',
-    tips: [
-      'urgency ex: low, medium, high.',
-      'Decrire precisement le besoin et les competences.',
-    ],
-    template: { title: '', description: '', urgency: 'medium' },
-  },
-  discussions: {
-    title: 'Discussions',
-    expected: 'Champs recommandes: title, messages[].',
-    tips: [
-      'messages est un tableau: { id, author, text }.',
-      'Garder les titres de discussion courts et explicites.',
-    ],
-    template: { title: '', messages: [{ id: 'm1', author: 'admin', text: '' }] },
-  },
-}
+type RecordItem = { id?: string; title?: string; name?: string; [key: string]: unknown };
+type Field = { key: string; label: string; type?: "text" | "url" | "date" | "number" | "textarea" | "list" | "select"; options?: string[]; placeholder?: string };
+
+const TEMPLATES: Record<string, { title: string; expected: string; tips: string[]; template: RecordItem }> = {
+  contributors: { title: "Contributeurs", expected: "Nom et URL GitHub requis. L’image est facultative.", tips: ["Utilisez une URL GitHub complète."], template: { name: "", github: "https://github.com/username", avatar: "" } },
+  profiles: { title: "Profils communauté", expected: "Nom et rôle requis.", tips: ["Ajoutez les compétences une par ligne."], template: { name: "", role: "", skills: [], points: 0, projects: 0 } },
+  projects: { title: "Projets", expected: "Nom du projet requis.", tips: ["Ajoutez les membres et tâches dans les sections dédiées."], template: { title: "", description: "", members: [], tasks: [] } },
+  events: { title: "Événements", expected: "Titre, date et type requis.", tips: ["La date s’affiche au format année-mois-jour."], template: { title: "", date: "", type: "Atelier", description: "" } },
+  resources: { title: "Ressources", expected: "Titre et catégorie requis.", tips: ["Ajoutez un lien complet commençant par https://."], template: { title: "", category: "Documentation", url: "" } },
+  experiments: { title: "Expériences", expected: "Titre requis.", tips: ["Décrivez le contexte et les résultats dans les notes."], template: { title: "", notes: "" } },
+  "open-calls": { title: "Appels ouverts", expected: "Titre et description requis.", tips: ["Choisissez un niveau d’urgence."], template: { title: "", description: "", urgency: "medium" } },
+  discussions: { title: "Discussions", expected: "Sujet requis.", tips: ["Les messages initiaux sont facultatifs."], template: { title: "", messages: [] } },
+};
+
+const FIELDS: Record<string, Field[]> = {
+  contributors: [
+    { key: "name", label: "Nom affiché", placeholder: "Ex. Alex Martin" },
+    { key: "github", label: "Profil GitHub", type: "url", placeholder: "https://github.com/username" },
+    { key: "avatar", label: "Lien de l’image (facultatif)", type: "url", placeholder: "https://… ou /images/photo.jpg" },
+  ],
+  profiles: [
+    { key: "name", label: "Nom" }, { key: "role", label: "Rôle" },
+    { key: "skills", label: "Compétences", type: "list", placeholder: "Une compétence par ligne" },
+    { key: "points", label: "Points", type: "number" }, { key: "projects", label: "Projets réalisés", type: "number" },
+  ],
+  projects: [
+    { key: "title", label: "Nom du projet" }, { key: "description", label: "Description", type: "textarea" },
+    { key: "members", label: "Membres", type: "list", placeholder: "Un nom ou identifiant par ligne" },
+  ],
+  events: [
+    { key: "title", label: "Nom de l’événement" }, { key: "date", label: "Date", type: "date" },
+    { key: "type", label: "Type", placeholder: "Atelier, webinaire…" }, { key: "description", label: "Description", type: "textarea" },
+  ],
+  resources: [
+    { key: "title", label: "Titre" }, { key: "category", label: "Catégorie", placeholder: "Documentation, code…" },
+    { key: "url", label: "Lien", type: "url", placeholder: "https://…" },
+  ],
+  experiments: [{ key: "title", label: "Titre" }, { key: "notes", label: "Notes", type: "textarea" }],
+  "open-calls": [
+    { key: "title", label: "Titre" }, { key: "description", label: "Description", type: "textarea" },
+    { key: "urgency", label: "Urgence", type: "select", options: ["low", "medium", "high"] },
+  ],
+  discussions: [{ key: "title", label: "Sujet" }],
+};
+
+const REQUIRED_FIELDS: Record<string, string[]> = {
+  contributors: ["name", "github"], profiles: ["name", "role"], projects: ["title"],
+  events: ["title", "date", "type"], resources: ["title", "category"],
+  experiments: ["title"], "open-calls": ["title", "description"], discussions: ["title"],
+};
+
+const inputClass = "mt-1.5 w-full rounded-xl border border-white/10 bg-[#07111f] px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-[#d4af37]/60 focus:ring-2 focus:ring-[#d4af37]/10";
 
 export default function DataManager({ type }: { type: string }) {
-  const [items, setItems] = useState<Item[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [editing, setEditing] = useState<Item | null>(null)
-  const [editorValue, setEditorValue] = useState('')
-  const help = TYPE_HELP[type] ?? {
-    title: type,
-    expected: 'Aucun schema predefini pour ce type.',
-    tips: ['Respecter la structure attendue par la page qui lit ce fichier.'],
-    template: { title: '' },
-  }
+  const help = TEMPLATES[type] ?? { title: type, expected: "Respectez les champs attendus pour cette collection.", tips: [], template: { title: "" } };
+  const [items, setItems] = useState<RecordItem[]>([]);
+  const [form, setForm] = useState<RecordItem>({});
+  const [editorValue, setEditorValue] = useState("");
+  const [editing, setEditing] = useState<RecordItem | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [jsonError, setJsonError] = useState("");
 
   async function fetchItems() {
-    setLoading(true)
-    setError('')
+    setLoading(true);
+    setError("");
     try {
-      const res = await fetch(`/api/data/${type}`)
-      if (!res.ok) throw new Error('Unable to load data')
-      const data = await res.json()
-      setItems(data)
-    } catch {
-      setError('Impossible de charger les données.')
-      setItems([])
-    } finally {
-      setLoading(false)
-    }
+      const response = await fetch(`/api/data/${type}`, { cache: "no-store" });
+      if (!response.ok) throw new Error();
+      const data = await response.json();
+      setItems(Array.isArray(data) ? data : []);
+    } catch { setError("Impossible de charger les données."); setItems([]); }
+    finally { setLoading(false); }
   }
 
-  useEffect(() => {
-    fetchItems()
-  }, [type])
+  useEffect(() => { void fetchItems(); }, [type]);
+
+  function setFormValue(next: RecordItem) {
+    setForm(next);
+    setEditorValue(JSON.stringify(next, null, 2));
+    setJsonError("");
+  }
 
   function startNew() {
-    setEditing(null)
-    setEditorValue(JSON.stringify(help.template, null, 2))
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setEditing(null);
+    setError(""); setSuccess("");
+    setFormValue(JSON.parse(JSON.stringify(help.template)) as RecordItem);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function startEdit(item: Item) {
-    setEditing(item)
-    setEditorValue(JSON.stringify(item, null, 2))
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  function startEdit(item: RecordItem) {
+    setEditing(item);
+    setError(""); setSuccess("");
+    setFormValue(JSON.parse(JSON.stringify(item)) as RecordItem);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function updateField(key: string, value: unknown) {
+    setFormValue({ ...form, [key]: value });
+  }
+
+  function updateJson(value: string) {
+    setEditorValue(value);
+    try {
+      const parsed: unknown = JSON.parse(value);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
+      setForm(parsed as RecordItem);
+      setJsonError("");
+    } catch { setJsonError("Le JSON doit être un objet valide avant l’enregistrement."); }
+  }
+
+  function updateNested(field: "tasks" | "messages", index: number, key: string, value: unknown) {
+    const rows = Array.isArray(form[field]) ? [...form[field] as RecordItem[]] : [];
+    rows[index] = { ...rows[index], [key]: value };
+    updateField(field, rows);
+  }
+
+  function addNested(field: "tasks" | "messages") {
+    const rows = Array.isArray(form[field]) ? [...form[field] as RecordItem[]] : [];
+    rows.push(field === "tasks"
+      ? { id: `task-${crypto.randomUUID()}`, title: "", done: false }
+      : { id: `message-${crypto.randomUUID()}`, author: "", text: "" });
+    updateField(field, rows);
+  }
+
+  function removeNested(field: "tasks" | "messages", index: number) {
+    const rows = Array.isArray(form[field]) ? [...form[field] as RecordItem[]] : [];
+    updateField(field, rows.filter((_, rowIndex) => rowIndex !== index));
   }
 
   async function save() {
-    try {
-      const parsed = JSON.parse(editorValue)
-      setLoading(true)
-      let res
-      if (editing && editing.id) {
-        parsed.id = editing.id
-        res = await fetch(`/api/data/${type}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parsed) })
-      } else {
-        res = await fetch(`/api/data/${type}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parsed) })
-      }
-      if (res.ok) {
-        await fetchItems()
-        setEditing(null)
-        setEditorValue('')
-      } else {
-        const data = await res.json().catch(() => null)
-        setError(data?.error || 'Erreur serveur')
-      }
-    } catch {
-      setError('JSON invalide')
+    if (jsonError) { setError(jsonError); return; }
+    const missingField = (REQUIRED_FIELDS[type] ?? []).find((key) => {
+      const value = form[key];
+      return typeof value !== "string" || !value.trim();
+    });
+    if (missingField) {
+      const label = FIELDS[type]?.find((field) => field.key === missingField)?.label ?? missingField;
+      setError(`Le champ « ${label} » est obligatoire.`);
+      return;
     }
-    setLoading(false)
+    setLoading(true); setError(""); setSuccess("");
+    const payload = { ...form };
+    if (editing?.id) payload.id = editing.id;
+    try {
+      const response = await fetch(`/api/data/${type}`, {
+        method: editing?.id ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+        throw new Error(result?.error || "Erreur lors de l’enregistrement.");
+      }
+      await fetchItems();
+      setEditing(null); setForm({}); setEditorValue("");
+      setSuccess(editing ? "Modifications enregistrées." : "Élément ajouté avec succès.");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Impossible d’enregistrer les données."); }
+    finally { setLoading(false); }
   }
 
   async function remove(id?: string) {
-    if (!id) return
-    if (!confirm('Supprimer cet élément ?')) return
-    setLoading(true)
-    const response = await fetch(`/api/data/${type}?id=${id}`, { method: 'DELETE' })
-    if (!response.ok) setError('Impossible de supprimer cet élément.')
-    await fetchItems()
-    setLoading(false)
+    if (!id || !confirm("Supprimer cet élément ?")) return;
+    setLoading(true); setError(""); setSuccess("");
+    try {
+      const response = await fetch(`/api/data/${type}?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Impossible de supprimer cet élément.");
+      await fetchItems(); setSuccess("Élément supprimé.");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Erreur de suppression."); }
+    finally { setLoading(false); }
   }
 
+  const nestedRows = (field: "tasks" | "messages") => Array.isArray(form[field]) ? form[field] as RecordItem[] : [];
+
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Gestion — {help.title}</h2>
-        <div className="flex gap-2">
-          <button onClick={startNew} className="rounded-md bg-[#d4af37] px-3 py-2 text-black">Nouvel élément</button>
-          <button onClick={fetchItems} className="rounded-md bg-white/5 px-3 py-2 text-white">Rafraîchir</button>
-        </div>
+    <div className="space-y-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#d4af37]">Collection</p><h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{help.title}</h2><p className="mt-1 text-sm text-slate-400">Ajoutez, modifiez ou retirez des éléments.</p></div>
+        <div className="flex flex-wrap gap-2"><ImportButton type={type} sample={help.template} onImported={fetchItems} /><button onClick={startNew} className="rounded-xl bg-[#d4af37] px-4 py-2.5 text-sm font-semibold text-[#14110a] transition hover:bg-[#efd779]">Nouvel élément</button><button onClick={fetchItems} disabled={loading} className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-slate-300 transition hover:bg-white/5 disabled:opacity-50">Actualiser</button></div>
       </div>
 
-      {error && <div role="alert" className="mb-4 rounded-lg border border-red-400/30 bg-red-950/30 p-3 text-sm text-red-200">{error}</div>}
+      {error && <div role="alert" className="rounded-xl border border-red-400/30 bg-red-950/30 p-3 text-sm text-red-200">{error}</div>}
+      {success && <div role="status" className="rounded-xl border border-emerald-400/20 bg-emerald-950/20 p-3 text-sm text-emerald-200">{success}</div>}
 
-      <div className="mb-4 rounded-lg border border-white/10 bg-white/5 p-4">
-        <div className="text-sm font-semibold text-white">Structure attendue</div>
-        <div className="mt-1 text-sm text-slate-300">{help.expected}</div>
-        <ul className="mt-2 list-disc pl-5 text-xs text-slate-400 space-y-1">
-          {help.tips.map((tip, idx) => <li key={idx}>{tip}</li>)}
-        </ul>
-      </div>
+      <div className="rounded-2xl border border-white/[0.08] bg-[#0b1827] p-4 sm:p-5"><div className="text-sm font-semibold text-white">À propos des champs</div><p className="mt-1 text-sm text-slate-400">{help.expected}</p>{help.tips.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-500">{help.tips.map((tip) => <li key={tip}>{tip}</li>)}</ul>}</div>
 
-      <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
-          <div className="rounded-lg bg-white/3 p-4">
-            <div className="mb-2 text-sm text-slate-300">Éditeur JSON</div>
-            <textarea className="w-full h-40 rounded bg-black/10 p-3 text-sm" value={editorValue} onChange={(e) => setEditorValue(e.target.value)} />
-            <div className="mt-2 flex gap-2">
-              <button onClick={save} disabled={loading} className="rounded-md bg-[#d4af37] px-3 py-2 text-black">{loading ? 'Enregistrement...' : 'Enregistrer'}</button>
-              <button onClick={() => setEditorValue(JSON.stringify(help.template, null, 2))} className="rounded-md bg-white/5 px-3 py-2 text-white">Modele</button>
-              <button onClick={() => { setEditing(null); setEditorValue('') }} className="rounded-md bg-white/5 px-3 py-2 text-white">Annuler</button>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <section className="md:col-span-2 rounded-2xl border border-white/[0.08] bg-[#0b1827] p-4 sm:p-5">
+          <div className="mb-5 flex items-start justify-between gap-3"><div><h3 className="text-base font-semibold text-white">{editing ? "Modifier les informations" : "Informations de l’élément"}</h3><p className="mt-1 text-xs text-slate-500">Remplissez les champs ci-dessous. Les champs obligatoires sont marqués d’un astérisque.</p></div><span className="shrink-0 rounded-full bg-white/[0.05] px-2.5 py-1 text-[11px] text-slate-400">{editing ? "Modification" : "Nouvel élément"}</span></div>
 
-        <div className="md:col-span-1">
-          <div className="rounded-lg bg-white/3 p-4 max-h-[60vh] overflow-auto">
-            <div className="text-sm text-slate-300 mb-2">Éléments ({items.length})</div>
-            <ul className="space-y-2">
-              {items.map((it: Item) => (
-                <li key={it.id} className="flex items-center justify-between gap-2">
-                  <div className="truncate">{it.title || it.name || it.id}</div>
-                  <div className="flex gap-2">
-                    <button onClick={() => startEdit(it)} className="rounded-md bg-white/5 px-2 py-1 text-sm text-white">Éditer</button>
-                    <button onClick={() => remove(it.id)} className="rounded-md bg-red-600 px-2 py-1 text-sm text-white">Suppr</button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+          {FIELDS[type] ? <div className="grid gap-4 sm:grid-cols-2">{FIELDS[type].map((field) => {
+            const value = form[field.key];
+            const wide = field.type === "textarea" || field.type === "list";
+            const required = (REQUIRED_FIELDS[type] ?? []).includes(field.key);
+            return <label key={field.key} className={`block text-xs font-medium text-slate-400 ${wide ? "sm:col-span-2" : ""}`}>{field.label}{required ? " *" : ""}
+              {field.type === "textarea" || field.type === "list" ? <textarea rows={field.type === "list" ? 3 : 4} required={required} value={field.type === "list" ? (Array.isArray(value) ? value.join("\n") : "") : String(value ?? "")} onChange={(event) => updateField(field.key, field.type === "list" ? event.target.value.split(/[\n,]/).map((entry) => entry.trim()).filter(Boolean) : event.target.value)} placeholder={field.placeholder || (field.type === "list" ? "Un élément par ligne" : "")} className={inputClass} />
+                : field.type === "select" ? <select value={String(value ?? field.options?.[0] ?? "")} onChange={(event) => updateField(field.key, event.target.value)} className={inputClass}>{field.options?.map((option) => <option key={option} value={option} className="bg-[#0b1827]">{option}</option>)}</select>
+                  : <input type={field.type || "text"} required={required} value={String(value ?? "")} onChange={(event) => updateField(field.key, field.type === "number" ? (event.target.value === "" ? "" : Number(event.target.value)) : event.target.value)} placeholder={field.placeholder} className={inputClass} />}
+            </label>;
+          })}</div> : <p className="rounded-xl border border-amber-300/15 bg-amber-300/[0.04] p-3 text-sm text-amber-100">Aucun formulaire standard n’est défini pour cette collection. Utilisez le JSON dans les options avancées.</p>}
+
+          {type === "projects" && <div className="mt-5 rounded-xl border border-white/[0.07] p-4"><div className="mb-3 flex items-center justify-between"><div><h4 className="text-sm font-medium text-slate-200">Tâches du projet</h4><p className="mt-1 text-xs text-slate-500">Ajoutez les tâches et cochez celles qui sont terminées.</p></div><button type="button" onClick={() => addNested("tasks")} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5">Ajouter une tâche</button></div>
+            {nestedRows("tasks").map((task, index) => <div key={String(task.id ?? index)} className="mb-2 flex items-center gap-2"><input aria-label="Titre de la tâche" value={String(task.title ?? "")} onChange={(event) => updateNested("tasks", index, "title", event.target.value)} placeholder="Description de la tâche" className={`${inputClass} mt-0`} /><label className="flex shrink-0 items-center gap-2 text-xs text-slate-400"><input type="checkbox" checked={Boolean(task.done)} onChange={(event) => updateNested("tasks", index, "done", event.target.checked)} className="accent-[#d4af37]" />Terminée</label><button type="button" aria-label="Retirer la tâche" onClick={() => removeNested("tasks", index)} className="rounded-lg px-2 py-2 text-slate-500 hover:bg-red-400/10 hover:text-red-300">×</button></div>)}
+            {nestedRows("tasks").length === 0 && <p className="text-xs text-slate-500">Aucune tâche ajoutée.</p>}</div>}
+
+          {type === "discussions" && <div className="mt-5 rounded-xl border border-white/[0.07] p-4"><div className="mb-3 flex items-center justify-between"><div><h4 className="text-sm font-medium text-slate-200">Messages</h4><p className="mt-1 text-xs text-slate-500">Ajoutez les messages initiaux de la discussion.</p></div><button type="button" onClick={() => addNested("messages")} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5">Ajouter un message</button></div>
+            {nestedRows("messages").map((message, index) => <div key={String(message.id ?? index)} className="mb-3 grid gap-2 rounded-xl bg-white/[0.02] p-3 sm:grid-cols-[1fr_2fr_auto]"><input aria-label="Auteur" value={String(message.author ?? "")} onChange={(event) => updateNested("messages", index, "author", event.target.value)} placeholder="Auteur" className={`${inputClass} mt-0`} /><input aria-label="Message" value={String(message.text ?? "")} onChange={(event) => updateNested("messages", index, "text", event.target.value)} placeholder="Texte du message" className={`${inputClass} mt-0`} /><button type="button" onClick={() => removeNested("messages", index)} className="rounded-lg px-2 py-2 text-slate-500 hover:bg-red-400/10 hover:text-red-300">Retirer</button></div>)}
+            {nestedRows("messages").length === 0 && <p className="text-xs text-slate-500">Aucun message ajouté.</p>}</div>}
+
+          <details className="mt-5 rounded-xl border border-white/[0.07] p-4"><summary className="cursor-pointer text-sm font-medium text-slate-300">Options avancées · modifier le JSON</summary><div className="mt-3"><textarea spellCheck={false} aria-label="Éditeur JSON avancé" className="min-h-56 w-full rounded-xl border border-white/10 bg-[#07111f] p-4 font-mono text-xs leading-6 text-slate-200 outline-none transition focus:border-[#d4af37]/50 focus:ring-2 focus:ring-[#d4af37]/10" value={editorValue} onChange={(event) => updateJson(event.target.value)} /><p className={`mt-2 text-xs ${jsonError ? "text-red-300" : "text-slate-500"}`}>{jsonError || "Les changements JSON sont synchronisés avec le formulaire ci-dessus."}</p></div></details>
+
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-white/[0.06] pt-4"><button onClick={save} disabled={loading || !Object.keys(form).length || Boolean(jsonError)} className="rounded-xl bg-[#d4af37] px-4 py-2.5 text-sm font-semibold text-[#14110a] transition hover:bg-[#efd779] disabled:cursor-not-allowed disabled:opacity-50">{loading ? "Enregistrement…" : editing ? "Enregistrer les modifications" : "Ajouter à la plateforme"}</button><button onClick={() => { setEditing(null); setForm({}); setEditorValue(""); setJsonError(""); setError(""); setSuccess(""); }} className="rounded-xl px-4 py-2.5 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white">Réinitialiser</button></div>
+        </section>
+
+        <aside className="max-h-[70vh] overflow-auto rounded-2xl border border-white/[0.08] bg-[#0b1827] p-4 sm:p-5"><div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold text-white">Éléments</h3><span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-slate-400">{items.length}</span></div>{items.length === 0 && !loading && <p className="rounded-xl border border-dashed border-white/10 px-3 py-8 text-center text-xs text-slate-500">Aucun élément. Ajoutez le premier pour commencer.</p>}<ul className="space-y-2">{items.map((item) => <li key={item.id} className="flex items-center justify-between gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5"><button onClick={() => startEdit(item)} className="min-w-0 flex-1 truncate text-left text-sm text-slate-300 hover:text-white">{item.title || item.name || item.id}</button><div className="flex shrink-0 gap-1"><button onClick={() => startEdit(item)} aria-label={`Modifier ${item.title || item.name || "cet élément"}`} className="rounded-lg px-2 py-1 text-xs text-slate-300 hover:bg-white/5">Modifier</button><button onClick={() => remove(item.id)} aria-label={`Supprimer ${item.title || item.name || "cet élément"}`} className="rounded-lg px-2 py-1 text-xs text-red-300 hover:bg-red-400/10">Supprimer</button></div></li>)}</ul></aside>
       </div>
     </div>
-  )
+  );
 }

@@ -33,19 +33,21 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-20 bg-gradient-to-b from-[#06142d] via-[#0a1f2e] to-[#06142d]">
-      <div className="w-full max-w-md">
-        <div className="rounded-3xl border border-[rgba(11,61,145,0.15)] bg-white/95 p-8 shadow-[0_24px_48px_rgba(11,61,145,0.12)] backdrop-blur dark:border-white/10 dark:bg-[rgba(7,24,51,0.95)]">
-          <div className="flex justify-center mb-8">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0b3d91]/10 dark:bg-white/5">
-              <Lock className="h-6 w-6 text-[#0b3d91] dark:text-[#d4af37]" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#07111f] px-4 py-16">
+      <div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-[#0b3d91]/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 -right-20 h-96 w-96 rounded-full bg-[#d4af37]/10 blur-3xl" />
+      <div className="relative w-full max-w-md">
+        <div className="rounded-3xl border border-white/10 bg-[#0b1827]/90 p-7 shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-9">
+          <div className="mb-8 flex justify-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#d4af37]/20 bg-[#d4af37]/10">
+              <Lock className="h-6 w-6 text-[#d4af37]" />
             </div>
           </div>
 
-          <h1 className="text-center text-2xl font-bold text-[#062147] dark:text-white mb-2">
+          <h1 className="mb-2 text-center text-2xl font-semibold text-white">
             Espace Administrateur
           </h1>
-          <p className="text-center text-sm text-slate-600 dark:text-slate-400 mb-8">
+          <p className="mb-8 text-center text-sm text-slate-400">
             Connectez-vous pour accéder au tableau de bord
           </p>
 
@@ -57,7 +59,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-[#062147] dark:text-white mb-2">
+              <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-200">
                 Mot de passe
               </label>
               <input
@@ -66,7 +68,7 @@ export default function LoginPage() {
                 placeholder="Entrez votre mot de passe"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-[rgba(11,61,145,0.15)] bg-white px-4 py-3 text-[#062147] placeholder-slate-500 transition-colors focus:border-[#0b3d91] focus:outline-none focus:ring-2 focus:ring-[#0b3d91]/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-slate-400"
+                className="w-full rounded-xl border border-white/10 bg-[#07111f] px-4 py-3 text-white placeholder-slate-600 outline-none transition focus:border-[#d4af37]/60 focus:ring-2 focus:ring-[#d4af37]/10"
                 required
                 autoFocus
               />
@@ -75,16 +77,16 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-full bg-gradient-to-r from-[#0b3d91] to-[#1a5fb7] px-6 py-3 text-white font-semibold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed border border-[#0b3d91]/50 hover:border-[#d4af37]/50"
+              className="w-full rounded-xl bg-[#d4af37] px-6 py-3 font-semibold text-[#14110a] transition hover:bg-[#efd779] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Connexion..." : "Se connecter"}
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-[rgba(11,61,145,0.1)] dark:border-white/10">
+          <div className="mt-8 border-t border-white/[0.07] pt-6">
             <Link
               href="/community"
-              className="inline-flex items-center text-sm text-[#0b3d91] hover:text-[#d4af37] dark:text-white dark:hover:text-[#d4af37] transition-colors"
+              className="inline-flex items-center text-sm text-slate-400 transition-colors hover:text-[#d4af37]"
             >
               ← Retour à la communauté
             </Link>

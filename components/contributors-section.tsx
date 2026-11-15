@@ -1,59 +1,7 @@
 import Link from "next/link";
+import type { Contributor } from "@/lib/types";
 
-const contributors = [
-  {
-    name: "musombokelwa",
-    github: "https://github.com/musombokelwa",
-    avatar: "https://github.com/musombokelwa.png",
-  },
-  {
-    name: "mukadi2",
-    github: "https://github.com/mukadi2",
-    avatar: "https://github.com/mukadi2.png",
-  },
-  {
-    name: "Ignace32",
-    github: "https://github.com/Ignace32",
-    avatar: "https://github.com/Ignace32.png",
-  },
-  {
-    name: "Athena-Evan01",
-    github: "https://github.com/Athena-Evan01",
-    avatar: "https://github.com/Athena-Evan01.png",
-  },
-  {
-    name: "SiegK18",
-    github: "https://github.com/SiegK18",
-    avatar: "https://github.com/SiegK18.png",
-  },
-  {
-    name: "Tomy Mutombo",
-    github: "https://github.com/tomymutombo",
-    avatar: "https://github.com/tomymutombo.png",
-  },
-  {
-    name: "Sem Kasanga",
-    github: "https://github.com/semkasanga",
-    avatar: "https://github.com/semkasanga.png",
-  },
-  {
-    name: "Keran Tyrinthe",
-    github: "https://github.com/KeranTyrinthe",
-    avatar: "/Contributor/keran/WhatsApp Image 2026-11-11 at 13.26.26.jpeg",
-  },
-  {
-    name: "Sierra Kaluba",
-    github: "https://github.com/SierraKaluba",
-    avatar: "https://github.com/SierraKaluba.png",
-  },
-  {
-    name: "Gilbert Benwiz",
-    github: "https://github.com/Gilbert243",
-    avatar: "/Contributor/Benwiz/WhatsApp Image 2026-11-11 at 12.32.04.jpeg",
-  },
-];
-
-const ContributorsSection = () => {
+const ContributorsSection = ({ contributors }: { contributors: Contributor[] }) => {
   return (
     <section className="py-12 md:py-16 bg-gradient-to-b from-[#06142d] via-[#0a1f2e] to-[#06142d] border-b border-[#d4af37]/10">
       <div className="mx-auto max-w-6xl px-4">
@@ -67,7 +15,7 @@ const ContributorsSection = () => {
         <div className="flex flex-wrap justify-center items-center gap-3 md:gap-4">
           {contributors.map((contributor) => (
             <Link
-              key={contributor.name}
+              key={contributor.id}
               href={contributor.github}
               target="_blank"
               rel="noopener noreferrer"

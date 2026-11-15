@@ -32,6 +32,28 @@ export async function POST(request: NextRequest, context: RouteContext) {
   if (!isAdminRequest(request)) return unauthorizedResponse();
 
   const body = await request.json().catch(() => null);
+  if (Array.isArray(body)) {
+    if (body.length === 0) return NextResponse.json({ error: "The import file is empty" }, { status: 400 });
+    if (body.length > 500) return NextResponse.json({ error: "Import is limited to 500 records" }, { status: 413 });
+
+    const records: DataRecord[] = [];
+    const errors: Array<{ row: number; error: string }> = [];
+    body.forEach((record, index) => {
+      const validation = validateDataRecord(type, record);
+      if (!validation.ok) errors.push({ row: index + 1, error: validation.error });
+      else records.push({ ...validation.value, id: randomUUID() });
+    });
+    if (errors.length) return NextResponse.json({ error: "Some rows are invalid", details: errors.slice(0, 20) }, { status: 400 });
+
+    const insert = getDatabase().prepare(
+      "INSERT INTO records (collection, id, data) VALUES (?, ?, ?)",
+    );
+    getDatabase().transaction(() => {
+      for (const record of records) insert.run(type, record.id, JSON.stringify(record));
+    })();
+    return NextResponse.json({ imported: records.length }, { status: 201 });
+  }
+
   const validation = validateDataRecord(type, body);
   if (!validation.ok) return NextResponse.json({ error: validation.error }, { status: 400 });
   const item = { ...validation.value, id: randomUUID() };

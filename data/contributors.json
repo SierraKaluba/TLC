@@ -1,14 +1,62 @@
 [
   {
-    "id": "contrib-1",
-    "name": "Example Contributor",
-    "github": "https://github.com/example",
-    "avatar": "https://github.com/example.png"
+    "id": "platform-contrib-musombokelwa",
+    "name": "musombokelwa",
+    "github": "https://github.com/musombokelwa",
+    "avatar": "https://github.com/musombokelwa.png"
   },
   {
-    "id": "138eda08-32d6-41a4-89a5-a60fd57226db",
-    "name": "sem kasanga",
+    "id": "platform-contrib-mukadi2",
+    "name": "mukadi2",
+    "github": "https://github.com/mukadi2",
+    "avatar": "https://github.com/mukadi2.png"
+  },
+  {
+    "id": "platform-contrib-ignace32",
+    "name": "Ignace32",
+    "github": "https://github.com/Ignace32",
+    "avatar": "https://github.com/Ignace32.png"
+  },
+  {
+    "id": "platform-contrib-athena-evan01",
+    "name": "Athena-Evan01",
+    "github": "https://github.com/Athena-Evan01",
+    "avatar": "https://github.com/Athena-Evan01.png"
+  },
+  {
+    "id": "platform-contrib-siegk18",
+    "name": "SiegK18",
+    "github": "https://github.com/SiegK18",
+    "avatar": "https://github.com/SiegK18.png"
+  },
+  {
+    "id": "platform-contrib-tomymutombo",
+    "name": "Tomy Mutombo",
+    "github": "https://github.com/tomymutombo",
+    "avatar": "https://github.com/tomymutombo.png"
+  },
+  {
+    "id": "platform-contrib-sem-kasanga",
+    "name": "Sem Kasanga",
     "github": "https://github.com/semkasanga",
     "avatar": "https://github.com/semkasanga.png"
+  },
+  {
+    "id": "platform-contrib-keran-tyrinthe",
+    "name": "Keran Tyrinthe",
+    "github": "https://github.com/KeranTyrinthe",
+    "avatar": "/Contributor/keran/WhatsApp Image 2026-11-11 at 13.26.26.jpeg"
+  },
+  {
+    "id": "platform-contrib-sierra-kaluba",
+    "name": "Sierra Kaluba",
+    "github": "https://github.com/SierraKaluba",
+    "avatar": "https://github.com/SierraKaluba.png"
+  },
+  {
+    "id": "platform-contrib-gilbert-benwiz",
+    "name": "Gilbert Benwiz",
+    "github": "https://github.com/Gilbert243",
+    "avatar": "/Contributor/Benwiz/WhatsApp Image 2026-11-11 at 12.32.04.jpeg"
   }
 ]

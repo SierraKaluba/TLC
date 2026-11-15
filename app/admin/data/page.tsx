@@ -1,41 +1,31 @@
-import Link from 'next/link'
+import Link from "next/link";
+import { ArrowUpRight, BookOpen, CalendarDays, FlaskConical, FolderKanban, Layers3, MessageSquare, Radio, Users, type LucideIcon } from "lucide-react";
 
-const TYPES = [
-  { key: 'contributors', title: 'Contributeurs', description: 'Profils affiches sur la page d accueil (nom, github, avatar).' },
-  { key: 'profiles', title: 'Profils communaute', description: 'Fiches membres: role, competences, points et participation projets.' },
-  { key: 'projects', title: 'Projets', description: 'Projets en cours et taches associees pour le suivi de la communaute.' },
-  { key: 'events', title: 'Evenements', description: 'Ateliers, webinaires, hackathons et dates importantes de la plateforme.' },
-  { key: 'resources', title: 'Ressources', description: 'Guides, liens, jeux de donnees, tutoriels et references utiles.' },
-  { key: 'experiments', title: 'Experiences', description: 'Experiences techniques, notes et resultats de tests ou prototypes.' },
-  { key: 'open-calls', title: 'Appels ouverts', description: 'Besoins de contribution, sujets de recherche et missions urgentes.' },
-  { key: 'discussions', title: 'Discussions', description: 'Canaux de discussion et historique de messages de la communaute.' },
-]
+const TYPES: { key: string; title: string; description: string; icon: LucideIcon; color: string }[] = [
+  { key: "contributors", title: "Contributeurs", description: "Personnes présentées sur la page d’accueil.", icon: Users, color: "text-amber-200 bg-amber-300/10" },
+  { key: "profiles", title: "Profils communauté", description: "Rôles, compétences et participation des membres.", icon: Users, color: "text-violet-200 bg-violet-300/10" },
+  { key: "projects", title: "Projets", description: "Projets, membres associés et tâches.", icon: FolderKanban, color: "text-sky-200 bg-sky-300/10" },
+  { key: "events", title: "Événements", description: "Ateliers, webinaires et rendez-vous.", icon: CalendarDays, color: "text-emerald-200 bg-emerald-300/10" },
+  { key: "resources", title: "Ressources", description: "Guides, liens et références utiles.", icon: BookOpen, color: "text-cyan-200 bg-cyan-300/10" },
+  { key: "experiments", title: "Expériences", description: "Prototypes, notes et résultats de tests.", icon: FlaskConical, color: "text-fuchsia-200 bg-fuchsia-300/10" },
+  { key: "open-calls", title: "Appels ouverts", description: "Missions et besoins de contribution.", icon: Radio, color: "text-rose-200 bg-rose-300/10" },
+  { key: "discussions", title: "Discussions", description: "Sujets et échanges de la communauté.", icon: MessageSquare, color: "text-orange-200 bg-orange-300/10" },
+];
 
 export default function AdminDataIndex() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Gestion des données</h1>
-      <p className="text-slate-300 mb-4">Choisis une collection a gerer pour ajouter, modifier ou supprimer des elements.</p>
-
-      <div className="mb-6 rounded-lg border border-white/10 bg-white/5 p-4">
-        <h2 className="text-lg font-semibold">Comment gerer les donnees</h2>
-        <ol className="mt-2 list-decimal pl-5 text-sm text-slate-300 space-y-1">
-          <li>Choisis une collection ci-dessous.</li>
-          <li>Clique sur "Nouvel element" pour creer une entree.</li>
-          <li>Utilise le JSON modele propose pour eviter les erreurs de structure.</li>
-          <li>Enregistre puis verifie le rendu sur la page publique correspondante.</li>
-        </ol>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {TYPES.map((item) => (
-          <Link key={item.key} href={`/admin/data/${item.key}`} className="rounded-lg border border-white/10 bg-white/5 p-4 hover:bg-white/8">
-            <div className="font-semibold">{item.title}</div>
-            <div className="mt-1 text-xs text-slate-400">`{item.key}.json`</div>
-            <div className="mt-2 text-sm text-slate-300">{item.description}</div>
+    <div className="space-y-8">
+      <div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#d4af37]">Contenu</p><h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Collections de données</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Choisissez une collection pour consulter, ajouter ou modifier les informations visibles sur la plateforme.</p></div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {TYPES.map(({ key, title, description, icon: Icon, color }) => (
+          <Link key={key} href={`/admin/data/${key}`} className="group rounded-2xl border border-white/[0.08] bg-[#0b1827] p-5 transition hover:-translate-y-0.5 hover:border-white/15 hover:bg-[#0e1d2e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4af37]">
+            <div className="flex items-start justify-between"><div className={`rounded-xl p-2.5 ${color}`}><Icon size={19} /></div><ArrowUpRight size={17} className="text-slate-600 transition group-hover:text-slate-300" /></div>
+            <h2 className="mt-5 font-semibold text-white">{title}</h2><p className="mt-1.5 min-h-10 text-sm leading-5 text-slate-400">{description}</p>
+            <div className="mt-4 flex items-center gap-2 border-t border-white/[0.06] pt-3 text-[11px] text-slate-500"><Layers3 size={13} />Collection <code className="rounded bg-white/[0.04] px-1.5 py-0.5 text-slate-400">{key}</code></div>
           </Link>
         ))}
       </div>
+      <div className="flex gap-3 rounded-2xl border border-sky-300/10 bg-sky-300/[0.04] p-4 text-sm text-slate-400"><span className="text-sky-200">i</span><p>Les modifications sont enregistrées dans la base de données et utilisées par les pages publiques correspondantes.</p></div>
     </div>
-  )
+  );
 }
