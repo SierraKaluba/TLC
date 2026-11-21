@@ -5,22 +5,21 @@ const CommunityVision = () => {
         <div>
           <h3 className="text-2xl font-semibold text-white">Notre vision</h3>
           <p className="mt-3 text-slate-300 leading-relaxed">
-            Tradition Learning est une théorie scientifique de l'apprentissage
-            fondée sur la transmission et la transformation d'une Tradition.
-            TLC est la communauté humaine qui mène la recherche, élabore les
-            spécifications et construit tllib.
+            Dans beaucoup de contextes, réunir suffisamment de données pour entraîner une IA
+            reste difficile. Tradition Learning étudie d’autres mécanismes d’apprentissage.
+            TLC mène cette recherche et développe les outils pour la mettre à l’épreuve.
           </p>
           <ul className="mt-4 space-y-2 text-sm text-slate-300">
-            <li>• Recherche sur l'apprentissage et la transmission</li>
-            <li>• Spécifications scientifiques traçables</li>
-            <li>• Bibliothèque tllib en développement</li>
+            <li>• Étudier les fondements de Tradition Learning</li>
+            <li>• Développer et tester la bibliothèque tllib</li>
+            <li>• Partager les travaux et accueillir des contributions</li>
           </ul>
         </div>
 
         <div className="text-left md:text-right">
-          <p className="text-sm text-slate-300">Engagez-vous :</p>
+          <p className="text-sm text-slate-300">Recherche, développement, partenariats :</p>
           <a href="/community" className="inline-block mt-3 rounded-md bg-[#d4af37] px-4 py-2 text-sm font-semibold text-black hover:bg-[#e0c158]">
-            Contribuer à TLC
+            Découvrir comment participer
           </a>
         </div>
       </div>
