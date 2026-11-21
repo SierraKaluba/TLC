@@ -4,12 +4,12 @@ const CommunitySection = () => {
       {/* Texte centré au-dessus */}
       <div className="mx-auto max-w-3xl text-center px-4 mb-12 lg:mb-20 z-10 relative">
         <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4">
-          Tradition Learning — IA pour l'Afrique
+          TLC — une communauté scientifique ouverte
         </h2>
         <p className="text-lg text-slate-300 leading-relaxed">
-          Nous rassemblons chercheurs, développeurs et acteurs locaux pour
-          co-créer des solutions d'IA utiles, éthiques et adaptées aux
-          réalités africaines. Rejoignez-nous pour contribuer et apprendre.
+          Depuis l'Afrique et ouverte au monde, TLC réunit les personnes qui
+          étudient Tradition Learning, produisent ses spécifications et
+          développent la bibliothèque tllib.
         </p>
       </div>
 
@@ -106,7 +106,7 @@ const CommunitySection = () => {
 
       {/* Texte du credit au bas */}
       <div className="text-center mt-12 text-sm text-slate-400">
-        Photos par nos événements
+        Images illustrant les activités et la communauté TLC
       </div>
     </section>
   )

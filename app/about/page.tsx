@@ -11,73 +11,53 @@ const AboutPage = () => {
         <span className="content-kicker">Vision TLC</span>
         <h1 className="content-title">À propos de TLC</h1>
         <p className="content-lead">
-          TLC (Tradition Learning Community) est une plateforme collaborative
-          dédiée à la recherche et au développement d'approches d'intelligence
-          artificielle axées sur l'efficacité des données, l'interprétabilité et
-          l'accessibilité. Nous produisons des guides pratiques, des jeux de
-          données annotés et des exemples reproductibles pour aider les
-          chercheurs et praticiens à construire des systèmes plus fiables.
+          Tradition Learning (TL) est une théorie scientifique de l'apprentissage.
+          Tradition Learning Community (TLC) est la communauté de chercheurs,
+          mathématiciens, ingénieurs et développeurs qui étudient la théorie,
+          la formalisent et développent la bibliothèque tllib.
         </p>
       </header>
 
       <div className="content-grid">
         <article id="what-is" className="content-panel">
-          <h2 className="content-panel-title">Qu’est-ce que le Tradition Learning ?</h2>
+          <h2 className="content-panel-title">Qu’est-ce que Tradition Learning ?</h2>
           <p className="content-panel-copy">
-            Tradition Learning est une démarche qui favorise la simplicité et
-            l'explicabilité : modèles compacts, pipelines documentés et
-            évaluations reproductibles. Plutôt que complexifier inutilement,
-            nous cherchons des solutions robustes, interprétables et faciles à
-            maintenir dans le temps.
+            Tradition Learning explore un apprentissage fondé sur un héritage vivant, intégré, évolutif et transmissible : la Tradition. Sa recherche examine notamment les situations où les données disponibles sont limitées, sans se réduire à un type de modèle ou à une modalité.
           </p>
           <p className="content-panel-copy">
-            Les contributions vont des protocoles d'évaluation aux jeux de
-            données nettoyés, en passant par des tutoriels et des implémentations
-            prêtes à l'emploi. L'objectif est de réduire la barrière d'entrée
-            pour des pratiques d'IA responsables.
+            Les entités fondamentales sont le Maître, le Disciple et la Communauté ; les huit objets sont Message, Principes, Valeurs, Vertus, Capacités, Compétences, Pratique et Expérience vécue. Transmission, transformation, mémoire, cohortes, générations, relations et régulation concourent au fonctionnement des systèmes TL.
           </p>
         </article>
 
         <article id="vision" className="content-panel">
-          <h2 className="content-panel-title">Vision & Mission</h2>
+          <h2 className="content-panel-title">Vision & mission de TLC</h2>
           <p className="content-panel-copy">
-            Notre mission est de rendre l'IA utile et compréhensible pour le
-            plus grand nombre. Nous facilitons le partage de méthodes qui limitent
-            la consommation de données et privilégient l'interprétabilité.
+            TLC développe un programme de recherche scientifique et une bibliothèque permettant de constituer et faire fonctionner des systèmes Tradition Learning. Le travail va de la théorie aux spécifications, à l'implémentation et aux tests.
           </p>
           <div className="content-chip-row">
-            <span className="content-chip">Reproductible</span>
-            <span className="content-chip">Collaboratif</span>
-            <span className="content-chip">Responsable</span>
+            <span className="content-chip">Recherche</span>
+            <span className="content-chip">Spécifications</span>
+            <span className="content-chip">Implémentation</span>
           </div>
           <p className="content-panel-copy mt-3">
-            À court terme, nous visons à créer un catalogue d'expériences
-            reproductibles ; à moyen terme, un hub communautaire pour l'échange
-            de ressources et d'ateliers pratiques.
+            tllib-specs publie les contrats ; tllib est la bibliothèque en développement, avec moteur C++20 et API C++ et Python. La V1 scientifique complète n'est pas encore publiée.
           </p>
         </article>
 
         <article id="values" className="content-panel">
-          <h2 className="content-panel-title">Valeurs & Éthique</h2>
+          <h2 className="content-panel-title">Rigueur & transparence</h2>
           <p className="content-panel-copy">
-            Transparence, équité et prudence guident nos choix. Nous documentons
-            les limites des modèles, encourageons les évaluations sur des jeux
-            de données diversifiés et promouvons des licences ouvertes lorsque
-            possible.
+            Nous distinguons les propositions théoriques, les contrats, les choix d'implémentation et les résultats expérimentaux. Les bénéfices espérés sur les faibles volumes de données, la robustesse et les biais doivent être mesurés.
           </p>
           <p className="content-panel-copy">
-            Les contributions doivent inclure des notes sur les biais potentiels
-            et des recommandations pour une utilisation responsable en production.
+            Les contributions doivent rester traçables aux sources scientifiques et aux spécifications, et signaler clairement les limites et les questions ouvertes.
           </p>
         </article>
 
         <article id="team" className="content-panel">
-          <h2 className="content-panel-title">L’Équipe</h2>
+          <h2 className="content-panel-title">La communauté TLC</h2>
           <p className="content-panel-copy">
-            TLC rassemble des chercheurs, ingénieurs et étudiants motivés par
-            l'IA explicable. L'équipe est distribuée et fonctionne par projets
-            collaboratifs ouverts — rejoignez-nous pour proposer des idées ou
-            prendre en charge des expérimentations.
+            TLC rassemble des personnes qui contribuent à la recherche, aux spécifications, à la bibliothèque tllib, aux tests et à la documentation. La Communauté, entité scientifique de TL, est distincte de l'organisation humaine TLC.
           </p>
           <ul className="content-list">
             <li className="content-list-item">Proposer une amélioration</li>
@@ -87,21 +67,16 @@ const AboutPage = () => {
         </article>
 
         <article id="roadmap" className="content-panel">
-          <h2 className="content-panel-title">Roadmap</h2>
+          <h2 className="content-panel-title">État des travaux</h2>
           <p className="content-panel-copy">
-            Nos priorités : 1) standardiser des protocoles d'évaluation, 2)
-            publier des jeux de données annotés, 3) organiser des ateliers
-            thématiques et 4) développer des outils légers pour le déploiement
-            reproductible. Les jalons seront publiés et discutés publiquement.
+            Les spécifications tllib-specs couvrent les contrats des 36 domaines. Les fondations du moteur C++20, du runtime et des interfaces sont présentes dans tllib, mais les fonctionnalités scientifiques et leur conformité complète restent en développement. Consultez les README des dépôts pour l'état actualisé.
           </p>
         </article>
 
         <article id="faq" className="content-panel">
-          <h2 className="content-panel-title">FAQ</h2>
+          <h2 className="content-panel-title">Sources de référence</h2>
           <p className="content-panel-copy">
-            Vous trouverez ici des réponses aux questions fréquentes sur la
-            contribution, l'utilisation des ressources et les licences. Pour
-            toute question spécifique, contactez l'équipe via la page Contact.
+            Le manuscrit Tradition Learning est la source théorique ; tllib-specs constitue le référentiel contractuel ; tllib est le produit logiciel. Consultez les ressources et les dépôts pour les textes et les informations de développement.
           </p>
         </article>
       </div>

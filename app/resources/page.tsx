@@ -1,7 +1,7 @@
 export const metadata = {
   title: "Ressources — TLC",
   description:
-    "Ressources pédagogiques, articles et datasets recommandés par la communauté TLC.",
+    "Sources officielles et documentation de Tradition Learning, tllib-specs et tllib.",
 };
 
 const RessourcesPage = () => {
@@ -11,8 +11,8 @@ const RessourcesPage = () => {
         <span className="content-kicker">Base de connaissances</span>
         <h1 className="content-title">Ressources</h1>
         <p className="content-lead">
-          Cette page centralise des cours, articles, jeux de données et outils
-          utiles pour travailler avec les approches Tradition Learning.
+          Retrouvez les sources scientifiques, les spécifications et la bibliothèque
+          actuellement disponibles. Chaque document a un rôle distinct.
         </p>
       </header>
 
@@ -20,17 +20,17 @@ const RessourcesPage = () => {
         <article className="content-panel">
           <h2 className="content-panel-title">Guides</h2>
           <ul className="content-list">
-            <li className="content-list-item">Introduction à Tradition Learning</li>
-            <li className="content-list-item">Évaluation des modèles</li>
-            <li className="content-list-item">Outils et bibliothèques utiles</li>
+            <li className="content-list-item"><a href="/about#what-is">Introduction à Tradition Learning</a></li>
+            <li className="content-list-item"><a href="https://github.com/Tradition-Learning-Community/tllib-specs">Spécifications tllib-specs</a></li>
+            <li className="content-list-item"><a href="https://github.com/Tradition-Learning-Community/tllib">Bibliothèque tllib</a></li>
           </ul>
         </article>
 
         <article className="content-panel">
-          <h2 className="content-panel-title">Datasets</h2>
+          <h2 className="content-panel-title">Documentation technique</h2>
           <ul className="content-list">
-            <li className="content-list-item">Dataset public A</li>
-            <li className="content-list-item">Dataset public B</li>
+            <li className="content-list-item"><a href="https://github.com/Tradition-Learning-Community/tllib/blob/main/README.md">État et architecture de tllib</a></li>
+            <li className="content-list-item"><a href="https://github.com/Tradition-Learning-Community/tllib-specs/blob/main/README.md">Sources contractuelles</a></li>
           </ul>
         </article>
       </div>
@@ -38,8 +38,8 @@ const RessourcesPage = () => {
       <article className="content-panel mt-5">
         <h2 className="content-panel-title">Liens utiles</h2>
         <div className="content-chip-row">
-          <a href="#" className="content-chip">Tutoriels</a>
-          <a href="#" className="content-chip">Articles scientifiques</a>
+          <a href="https://github.com/Tradition-Learning-Community/tllib" className="content-chip">Dépôt tllib</a>
+          <a href="https://github.com/Tradition-Learning-Community/tllib-specs" className="content-chip">Dépôt tllib-specs</a>
         </div>
       </article>
 
@@ -49,42 +49,42 @@ const RessourcesPage = () => {
           <div id="statuts-asbl" className="content-list-item">
             <strong>Statuts ASBL</strong>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Informations institutionnelles et cadre juridique de la communauté TLC.
+              Document officiel à publier après validation institutionnelle.
             </p>
           </div>
 
           <div id="charte-communautaire" className="content-list-item">
             <strong>Charte communautaire</strong>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Principes de collaboration, respect mutuel et bonnes pratiques.
+              Les règles officielles de contribution sont accessibles dans les dépôts GitHub.
             </p>
           </div>
 
           <div id="politique-confidentialite" className="content-list-item">
             <strong>Politique de confidentialité</strong>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Règles de collecte, traitement et protection des données personnelles.
+              Politique officielle à formaliser et publier avant de la présenter comme un document adopté.
             </p>
           </div>
 
           <div id="cookies" className="content-list-item">
             <strong>Cookies</strong>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Détails sur l'utilisation des cookies et options de consentement.
+              L'information définitive dépend des traitements et outils réellement utilisés.
             </p>
           </div>
 
           <div id="licence-open-source" className="content-list-item">
             <strong>Licence open-source</strong>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Modalités de réutilisation du code et des ressources publiées.
+              Le code du site TLC est publié sous licence MIT ; les autres dépôts ont leurs propres licences.
             </p>
           </div>
 
           <div id="securite" className="content-list-item">
             <strong>Sécurité</strong>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Processus de signalement responsable et mesures de sécurité appliquées.
+              Les informations de signalement officielles sont disponibles dans les dépôts concernés.
             </p>
           </div>
         </div>

@@ -21,10 +21,14 @@ export default function CommunityPage() {
           fetch("/api/community/calls"),
         ]);
 
-        setEvents(await eventsRes.json());
-        setMembers(await membersRes.json());
-        setResources(await resourcesRes.json());
-        setOpenCalls(await callsRes.json());
+        const loadedEvents = await eventsRes.json();
+        setEvents(Array.isArray(loadedEvents) ? loadedEvents.filter((event: { published?: boolean; date?: string }) => event.published === true && typeof event.date === 'string' && event.date >= new Date().toISOString().slice(0, 10)) : []);
+        const loadedMembers = await membersRes.json();
+        setMembers(Array.isArray(loadedMembers) ? loadedMembers.filter((member: { published?: boolean }) => member.published === true) : []);
+        const loadedResources = await resourcesRes.json();
+        setResources(Array.isArray(loadedResources) ? loadedResources.filter((item: { published?: boolean; url?: string }) => item.published === true && Boolean(item.url) && item.url !== '#') : []);
+        const loadedCalls = await callsRes.json();
+        setOpenCalls(Array.isArray(loadedCalls) ? loadedCalls.filter((call: { published?: boolean }) => call.published === true) : []);
       } catch (error) {
         console.error("Failed to load community data", error);
       } finally {
@@ -35,26 +39,26 @@ export default function CommunityPage() {
     fetchData();
   }, []);
 
-  // Statistiques calculées
+  // Ces repères décrivent les travaux réels, sans statistiques artificielles.
   const stats = [
-    { label: "Contributeurs actifs", value: (members.length * 4).toString() + "+" },
-    { label: "Projets open-source", value: members.reduce((sum: number, m: any) => sum + (m.projects || 0), 0).toString() },
-    { label: "Pull Requests fusionnées", value: (members.reduce((sum: number, m: any) => sum + (m.points || 0), 0)).toString() + "+" },
-    { label: "Discussions en cours", value: "85" },
+    { label: "Théorie", value: "TL" },
+    { label: "Spécifications", value: "36", note: "domaines" },
+    { label: "Bibliothèque", value: "tllib" },
+    { label: "Communauté", value: "TLC" },
   ];
 
   const testimonials = [
     {
-      quote:
-        "TLC m'a permis de contribuer à des projets d'IA responsables et bien documentés.",
-      author: "Sophie M.",
-      role: "Développeuse",
+      quote: "Les fondements scientifiques, contrats et tests d'acceptation sont publiés dans le dépôt tllib-specs.",
+      author: "tllib-specs",
+      role: "Spécifications",
+      href: "https://github.com/Tradition-Learning-Community/tllib-specs",
     },
     {
-      quote:
-        "L'accent sur la reproductibilité fait toute la différence pour nos recherches.",
-      author: "Prof. Jean L.",
-      role: "Chercheur",
+      quote: "Le moteur C++20 et les interfaces C++ et Python sont en développement dans le dépôt tllib.",
+      author: "tllib",
+      role: "Bibliothèque",
+      href: "https://github.com/Tradition-Learning-Community/tllib",
     },
   ];
 
@@ -69,20 +73,19 @@ export default function CommunityPage() {
   return (
     <section className="content-shell pt-40">
       <header className="content-header">
-        <span className="content-kicker">Réseau ouvert</span>
+        <span className="content-kicker">Travaux ouverts</span>
         <h1 className="content-title">Communauté</h1>
         <p className="content-lead">
-          La communauté TLC regroupe des chercheurs, ingénieurs et passionnés qui
-          contribuent à des projets open-source, organisent des événements et
-          partagent des ressources pédagogiques. Rejoignez-nous et façonnez
-          l'avenir d'une IA plus responsable.
+          TLC rassemble des chercheurs, ingénieurs et développeurs qui font
+          progresser Tradition Learning, ses spécifications et la bibliothèque
+          tllib. Consultez les travaux ouverts pour contribuer.
         </p>
       </header>
 
       {/* Statistiques */}
       <section className="mt-12">
         <h2 className="mb-6 text-2xl font-semibold text-[#062147] dark:text-white">
-          Par les chiffres
+          Repères du projet
         </h2>
         <div className="grid gap-4 md:grid-cols-4">
           {stats.map((stat, i) => (
@@ -123,14 +126,14 @@ export default function CommunityPage() {
           </article>
 
           <article className="content-panel">
-            <h2 className="content-panel-title">Canaux de communication</h2>
+            <h2 className="content-panel-title">Où échanger ?</h2>
             <p className="content-panel-copy">
-              Nous recommandons des échanges réguliers sur les canaux suivants.
+              Les dépôts officiels permettent de suivre les travaux, signaler des problèmes et contribuer.
             </p>
             <div className="content-chip-row">
-              <span className="content-chip">Discord</span>
-              <span className="content-chip">Slack</span>
-              <span className="content-chip">GitHub Discussions</span>
+              <a className="content-chip" href="https://github.com/Tradition-Learning-Community/tllib">tllib</a>
+              <a className="content-chip" href="https://github.com/Tradition-Learning-Community/tllib-specs">tllib-specs</a>
+              <a className="content-chip" href="https://github.com/Tradition-Learning-Community/TLC">TLC</a>
             </div>
           </article>
         </div>
@@ -190,9 +193,10 @@ export default function CommunityPage() {
       {/* Événements */}
       <section className="mt-12">
         <h2 className="mb-6 text-2xl font-semibold text-[#062147] dark:text-white">
-          Événements à venir
+          Événements référencés
         </h2>
         <div className="space-y-3">
+          {events.length === 0 && <p className="content-panel-copy">Aucun événement à venir confirmé.</p>}
           {events.map((event) => (
             <div
               key={event.id}
@@ -220,6 +224,7 @@ export default function CommunityPage() {
           Ressources partagées
         </h2>
         <div className="grid gap-4 md:grid-cols-2">
+          {resources.length === 0 && <p className="content-panel-copy">Les ressources vérifiées sont disponibles sur la page Ressources.</p>}
           {resources.map((res) => (
             <div
               key={res.id}
@@ -236,12 +241,13 @@ export default function CommunityPage() {
         </div>
       </section>
 
-      {/* Membres en vedette */}
+      {/* Profils référencés */}
       <section className="mt-12">
         <h2 className="mb-6 text-2xl font-semibold text-[#062147] dark:text-white">
-          Membres en vedette
+          Profils publiés
         </h2>
         <div className="grid gap-4 md:grid-cols-3">
+          {members.length === 0 && <p className="content-panel-copy">Les profils seront présentés après validation de leur provenance.</p>}
           {members.map((member) => (
             <div
               key={member.id}
@@ -268,6 +274,7 @@ export default function CommunityPage() {
           Appels à contribution
         </h2>
         <div className="space-y-3">
+          {openCalls.length === 0 && <p className="content-panel-copy">Consultez les issues des dépôts officiels pour les travaux ouverts.</p>}
           {openCalls.map((call) => (
             <div
               key={call.id}
@@ -284,29 +291,26 @@ export default function CommunityPage() {
         </div>
       </section>
 
-      {/* Code de conduite */}
+      {/* Principes de collaboration */}
       <section className="mt-12">
         <div className="rounded-3xl border border-[rgba(11,61,145,0.12)] bg-white p-6 dark:border-white/10 dark:bg-[rgba(7,24,51,0.8)] md:p-8">
           <h2 className="text-xl font-semibold text-[#062147] dark:text-white">
-            Code de conduite
+            Principes de collaboration
           </h2>
           <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-            La communauté TLC s'engage à créer un environnement respectueux,
-            inclusif et bienveillant. Tous les contributeurs doivent respecter
-            notre code de conduite qui privilégie la transparence, l'équité et
-            l'écoute mutuelle. Les violations seront traitées de manière juste
-            et rapide.
+            La collaboration repose sur le respect, la traçabilité et la qualité des contributions.
+            Les procédures officielles sont précisées dans les guides de chaque dépôt.
           </p>
-          <button className="mt-4 rounded-full border border-[#0b3d91] px-4 py-2 text-sm font-medium text-[#0b3d91] transition-colors hover:bg-[#0b3d91] hover:text-white dark:border-[#d4af37] dark:text-[#d4af37] dark:hover:bg-[#d4af37]/20">
-            Lire le code complet
-          </button>
+          <a href="https://github.com/Tradition-Learning-Community/tllib/blob/main/CONTRIBUTING.md" className="mt-4 inline-block rounded-full border border-[#0b3d91] px-4 py-2 text-sm font-medium text-[#0b3d91] transition-colors hover:bg-[#0b3d91] hover:text-white dark:border-[#d4af37] dark:text-[#d4af37] dark:hover:bg-[#d4af37]/20">
+            Lire le guide de contribution
+          </a>
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Sources officielles, pas de témoignages simulés */}
       <section className="mt-12">
         <h2 className="mb-6 text-2xl font-semibold text-[#062147] dark:text-white">
-          Retours de la communauté
+          Sources des travaux
         </h2>
         <div className="grid gap-6 md:grid-cols-2">
           {testimonials.map((testimonial, i) => (
@@ -315,7 +319,7 @@ export default function CommunityPage() {
               className="rounded-2xl border border-[rgba(11,61,145,0.12)] bg-white p-6 dark:border-white/10 dark:bg-[rgba(7,24,51,0.8)]"
             >
               <p className="italic text-slate-600 dark:text-slate-300">
-                "{testimonial.quote}"
+                {testimonial.quote}
               </p>
               <div className="mt-4 flex items-center justify-between">
                 <div>
@@ -325,6 +329,7 @@ export default function CommunityPage() {
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {testimonial.role}
                   </p>
+                  <a className="mt-2 inline-block text-xs font-medium underline text-[#0b3d91] dark:text-[#d4af37]" href={testimonial.href} target="_blank" rel="noopener noreferrer">Consulter le dépôt</a>
                 </div>
               </div>
             </div>

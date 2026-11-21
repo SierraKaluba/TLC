@@ -4,9 +4,9 @@ import { ArrowRight, Github, ShieldCheck, Sparkles, Slack, Telescope, Brain, Boo
 import HeroEcosystem from "@/components/hero-ecosystem";
 
 type HeroStats = {
-  experiments: number;
-  contributors: number;
-  resources: number;
+  domains: number;
+  packages: number;
+  interfaces: number;
 };
 
 export default function HeroSection({ stats }: { stats: HeroStats }) {
@@ -30,14 +30,14 @@ export default function HeroSection({ stats }: { stats: HeroStats }) {
               </h1>
 
               <p className="mx-auto mt-6 max-w-3xl text-lg md:text-xl text-slate-300 leading-relaxed pt-2">
-                Des travaux plus sobres, rapides a tester et faciles a partager.
+                Tradition Learning : une recherche sur l’apprentissage, la transmission et l’évolution d’une Tradition.
               </p>
 
               <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button asChild size="lg" className="rounded-xl bg-gradient-to-r from-[#0b3d91] to-[#1a5fb7] px-8 py-3 text-white font-semibold transition-all duration-300 hover:scale-105 border border-[#0b3d91]/50 hover:border-[#d4af37]/50">
-                  <Link href="/projects" className="inline-flex items-center gap-2">
+                  <Link href="/about#what-is" className="inline-flex items-center gap-2">
                     <Telescope className="h-5 w-5" />
-                    Projets
+                    Comprendre TL
                     <ArrowRight className="h-5 w-5" />
                   </Link>
                 </Button>
@@ -45,16 +45,16 @@ export default function HeroSection({ stats }: { stats: HeroStats }) {
                 <Button asChild size="lg" className="rounded-xl border-2 border-[#d4af37]/60 px-8 py-3 text-white font-semibold bg-[rgba(212,175,55,0.05)] hover:bg-[#d4af37]/15 transition-all duration-300 hover:scale-105 hover:border-[#d4af37]">
                   <Link href="/community" className="inline-flex items-center gap-2">
                     <Slack className="h-5 w-5" />
-                    Communaute
+                    Communauté
                   </Link>
                 </Button>
               </div>
 
               <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto ">
                 {[
-                  { label: "Expériences", value: String(stats.experiments), note: "suivies" },
-                  { label: "Contributeurs", value: String(stats.contributors), note: "actifs" },
-                  { label: "Ressources", value: String(stats.resources), note: "partagées" }
+                  { label: "Domaines", value: String(stats.domains), note: "spécifiés" },
+                  { label: "Fiches TLC-FC", value: String(stats.packages), note: "publiées" },
+                  { label: "Interfaces", value: String(stats.interfaces), note: "C++ et Python" }
                 ].map((stat, i) => (
                   <div
                     key={i}

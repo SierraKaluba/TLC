@@ -1,13 +1,13 @@
 import { Logo } from "@/components/logo";
 import Link from "next/link";
-import { ArrowUpRight, Github, Instagram, Linkedin, Slack } from "lucide-react";
+import { ArrowUpRight, Github, Linkedin } from "lucide-react";
 
 const links = [
   {
     group: "Projet",
     items: [
       {
-        title: "Qu’est-ce que le Tradition Learning ?",
+        title: "Qu’est-ce que Tradition Learning ?",
             href: "/about#what-is",
       },
       {
@@ -33,35 +33,35 @@ const links = [
     ],
   },
   {
-    group: "Solution",
+    group: "Bibliothèque",
     items: [
       {
-        title: "Startup",
-        href: "/projects",
+        title: "tllib",
+        href: "https://github.com/Tradition-Learning-Community/tllib",
       },
       {
-        title: "Freelancers",
-        href: "/community",
+        title: "tllib-specs",
+        href: "https://github.com/Tradition-Learning-Community/tllib-specs",
       },
       {
-        title: "Organizations",
-        href: "/community",
+        title: "Architecture tllib",
+        href: "https://github.com/Tradition-Learning-Community/tllib/blob/main/docs/v1/ARCHITECTURE.md",
       },
       {
-        title: "Students",
-        href: "/community",
+        title: "Contribuer à tllib",
+        href: "https://github.com/Tradition-Learning-Community/tllib",
       },
       {
-        title: "Collaboration",
-        href: "/community",
+        title: "Développement TLC",
+        href: "https://github.com/Tradition-Learning-Community/TLC",
       },
       {
-        title: "Design",
+        title: "Documentation",
         href: "/resources",
       },
       {
-        title: "Management",
-        href: "/resources",
+        title: "Recherche & travaux",
+        href: "/about#roadmap",
       },
     ],
   },
@@ -77,20 +77,20 @@ const links = [
         href: "/events",
       },
       {
-        title: "Blog",
+        title: "Ressources",
         href: "/resources",
       },
       {
-        title: "Témoignages",
+        title: "Projets GitHub",
         href: "/community",
       },
       {
-        title: "Discord",
-        href: "#",
+        title: "Contributions",
+        href: "https://github.com/Tradition-Learning-Community",
       },
       {
-        title: "Newsletter",
-        href: "#",
+        title: "Contact TLC",
+        href: "/contact",
       },
     ],
   },
@@ -140,8 +140,7 @@ const socialLinks = [
     href: "https://www.linkedin.com/search/results/all/?keywords=Tradition%20Learning&origin=RICH_QUERY_SUGGESTION&heroEntityKey=urn%3Ali%3Aorganization%3A112040236&position=0",
     icon: Linkedin,
   },
-  { label: "Slack", href: "#", icon: Slack },
-  { label: "Instagram", href: "#", icon: Instagram },
+  
 ];
 
 export default function FooterSection() {
@@ -159,8 +158,7 @@ export default function FooterSection() {
             </Link>
 
             <p className="mt-5 max-w-xs text-sm leading-7 text-slate-300">
-              Tradition Learning Community, la plateforme collaborative pour une IA
-              plus sobre, plus lisible et plus utile.
+              Tradition Learning Community : recherche sur Tradition Learning, spécifications et développement de tllib.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2">

@@ -6,9 +6,9 @@ const ContributorsSection = ({ contributors }: { contributors: Contributor[] }) 
     <section className="py-12 md:py-16 bg-gradient-to-b from-[#06142d] via-[#0a1f2e] to-[#06142d] border-b border-[#d4af37]/10">
       <div className="mx-auto max-w-6xl px-4">
         <div className="text-center mb-8">
-          <h3 className="text-2xl font-semibold text-white">Soutenus par</h3>
+          <h3 className="text-2xl font-semibold text-white">Ils contribuent à TLC</h3>
           <p className="text-slate-300 mt-2">
-            Soutenu par d’innombrables donateurs, développé par des mainteneurs à temps plein et à temps partiel, TLC est là pour durer.
+            Découvrez les personnes référencées qui participent à nos projets et à la communauté.
           </p>
         </div>
 
