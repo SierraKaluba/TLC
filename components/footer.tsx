@@ -9,6 +9,5 @@ export default function FooterSection() {
       <div className="footer-links"><strong>Explorer</strong><Link href="/projects">Projets</Link><Link href="/community">Contributeurs</Link><Link href="/events">Événements</Link><Link href="/resources">Publications</Link><Link href="/about">Notre mission</Link></div>
       <div className="footer-bottom"><span>© {new Date().getFullYear()} TLC — Tradition Learning Community</span><Link href="https://github.com/Tradition-Learning-Community" target="_blank" rel="noreferrer">GitHub ↗</Link></div>
     </div>
-    <a className="back-top" href="#top" aria-label="Retour en haut">↑ Haut de page</a>
   </footer>;
 }
