@@ -1,15 +1,15 @@
 const CommunitySection = () => {
   return (
-    <section className="relative w-full bg-gradient-to-b from-[#06142d] via-[#0a1f2e] to-[#07162f] py-20 lg:py-32 border-b border-[#d4af37]/8">
+    <section className="relative w-full bg-gradient-to-b from-[#06142d] via-[#0a1f2e] to-[#07162f] py-16 lg:py-20 border-b border-[#d4af37]/8">
       {/* Texte centré au-dessus */}
       <div className="mx-auto max-w-3xl text-center px-4 mb-12 lg:mb-20 z-10 relative">
         <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4">
-          Tradition Learning — IA pour l'Afrique
+          Une communauté née en Afrique, ouverte au monde
         </h2>
         <p className="text-lg text-slate-300 leading-relaxed">
-          Nous rassemblons chercheurs, développeurs et acteurs locaux pour
-          co-créer des solutions d'IA utiles, éthiques et adaptées aux
-          réalités africaines. Rejoignez-nous pour contribuer et apprendre.
+          Étudiants, chercheurs, informaticiens, bénévoles et partenaires peuvent
+          unir leurs expériences pour faire progresser cette recherche et
+          explorer ses applications possibles.
         </p>
       </div>
 
@@ -104,10 +104,6 @@ const CommunitySection = () => {
         </div>
       </div>
 
-      {/* Texte du credit au bas */}
-      <div className="text-center mt-12 text-sm text-slate-400">
-        Photos par nos événements
-      </div>
     </section>
   )
 }
