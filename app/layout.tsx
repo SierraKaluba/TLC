@@ -5,40 +5,14 @@ import FooterSection from "@/components/footer";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "TLC — Tradition Learning",
-  description:
-    "TLC — Plateforme open-source pour l'approche Tradition Learning : IA performante, interprétable et accessible.",
+  title: "TLC — Tradition Learning Community",
+  description: "Recherche ouverte pour une intelligence artificielle sobre, accessible et utile.",
   openGraph: {
-    title: "TLC — Tradition Learning",
-    description:
-      "Plateforme open-source pour l'approche Tradition Learning : IA performante, interprétable et accessible.",
+    title: "TLC — Tradition Learning Community",
+    description: "Recherche ouverte pour une intelligence artificielle sobre, accessible et utile.",
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="fr" suppressHydrationWarning>
-      <body className="min-h-screen bg-background text-foreground">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="min-h-screen flex-1 ">
-              {children}
-            </main>
-
-            <FooterSection />
-          </div>
-        </ThemeProvider>
-      </body>
-    </html>
-  );
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="fr" suppressHydrationWarning><body className="min-h-screen bg-background text-foreground"><ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange><div className="flex min-h-screen flex-col"><Header/><main id="top" className="min-h-screen flex-1">{children}</main><FooterSection/></div></ThemeProvider></body></html>;
 }
