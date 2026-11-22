@@ -20,8 +20,16 @@ export default function BackToTop() {
       aria-hidden={!visible}
       tabIndex={visible ? 0 : -1}
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      style={{ borderRadius: 9999 }}
     >
-      <span aria-hidden="true">↑</span> Haut de page
+      <span
+        className="back-top-icon"
+        aria-hidden="true"
+        style={{ borderRadius: "50%" }}
+      >
+        ↑
+      </span>
+      Haut de page
     </button>
   );
 }
