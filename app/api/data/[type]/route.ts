@@ -6,7 +6,7 @@ import { validateDataRecord, type DataRecord } from "@/lib/validation";
 
 const ALLOWED_TYPES = new Set([
   "contributors", "profiles", "projects", "events", "resources",
-  "experiments", "open-calls", "discussions",
+  "experiments", "open-calls", "discussions", "news",
 ]);
 type RouteContext = { params: Promise<{ type: string }> };
 async function resolveType(context: RouteContext) {
@@ -17,7 +17,11 @@ async function resolveType(context: RouteContext) {
 export async function GET(_request: NextRequest, context: RouteContext) {
   const type = await resolveType(context);
   if (!type) return NextResponse.json({ error: "Unknown data type" }, { status: 404 });
-  return NextResponse.json(await readCollection<DataRecord>(type));
+  const records = await readCollection<DataRecord>(type);
+  const visibleRecords = type === "news" && !isAdminRequest(_request)
+    ? records.filter((record) => record.status === "published")
+    : records;
+  return NextResponse.json(visibleRecords);
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {

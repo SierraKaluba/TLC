@@ -7,7 +7,7 @@ TLC est une plateforme communautaire dédiée à la recherche et aux projets d�
 - Pages publiques : accueil, projets, contributeurs, événements, publications, mission et communauté.
 - Espace administrateur protégé pour gérer les contenus et les collections de données.
 - API Next.js pour consulter les contenus et effectuer les opérations d’administration autorisées.
-- Base SQLite locale alimentée à partir des fichiers JSON de `data/` lors de son initialisation.
+- PostgreSQL local pour les donnees admin et publiques, connecte via DATABASE_URL.
 - Thèmes clair et sombre.
 
 ## Prérequis
@@ -70,7 +70,7 @@ ADMIN_SESSION_SECRET=collez-ici-le-secret-genere
 
 Ces variables sont réservées au serveur. Ne leur donnez jamais le préfixe `NEXT_PUBLIC_`.
 
-La base de données n’a pas de variable de configuration : elle est créée dans `.data/tlc.sqlite`. Le dossier `.data/` est local et ignoré par Git.
+La base utilise PostgreSQL. Au premier appel API, le schema est cree et les fichiers JSON autorises de data/ sont importes une seule fois.
 
 ## Pages principales
 
@@ -120,3 +120,11 @@ Vérifiez que `ADMIN_PASSWORD` est renseigné dans `.env.local`, puis redémarre
 ## Contribution
 
 Consultez [`CONTRIBUTING.md`](./CONTRIBUTING.md) avant d’ouvrir une pull request. Le projet est distribué sous licence [MIT](./LICENSE).
+
+## PostgreSQL local avec Laragon
+
+La copie de test utilise PostgreSQL. Sur cette machine, une instance TLC isolee utilise le port 5433 et le dossier C:\laragon\data\tlc-admin-test; elle ne modifie pas l'instance Laragon existante du port 5432. Le fichier .env.local contient deja DATABASE_URL et les identifiants locaux (il est ignore par Git).
+
+Apres un redemarrage de Windows, lancez l'instance depuis la racine du projet avec powershell -ExecutionPolicy Bypass -File scripts/start-laragon-postgres.ps1, puis redemarrez Next.js avec pnpm dev. Au premier appel de l'API, les tables sont creees et les donnees initiales de data/ sont importees.
+
+Pour ouvrir l'administration, allez sur /admin/login et utilisez la valeur de ADMIN_PASSWORD dans .env.local. Ce mot de passe est reserve au developpement local.

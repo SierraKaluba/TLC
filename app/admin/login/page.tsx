@@ -33,11 +33,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#07111f] px-4 py-16">
-      <div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-[#0b3d91]/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-40 -right-20 h-96 w-96 rounded-full bg-[#d4af37]/10 blur-3xl" />
+    <div className="admin-login relative flex min-h-screen items-center justify-center overflow-hidden bg-[#07111f] px-4 py-16">
       <div className="relative w-full max-w-md">
-        <div className="rounded-3xl border border-white/10 bg-[#0b1827]/90 p-7 shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-9">
+        <div className="rounded-2xl border border-white/10 bg-[#0b1827] p-7 shadow-xl shadow-black/20 sm:p-9">
           <div className="mb-8 flex justify-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#d4af37]/20 bg-[#d4af37]/10">
               <Lock className="h-6 w-6 text-[#d4af37]" />

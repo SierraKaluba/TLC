@@ -32,6 +32,7 @@ const validators: Record<string, (value: DataRecord) => string | null> = {
   experiments: (value) => requiredString(value.title, "title", 160),
   "open-calls": (value) => requiredString(value.title, "title", 160) || requiredString(value.description, "description", 2000),
   discussions: (value) => requiredString(value.title, "title", 160),
+  news: (value) => requiredString(value.title, "title", 180) || requiredString(value.excerpt, "excerpt", 500) || requiredString(value.body, "body", 20000) || requiredString(value.status, "status", 20) || (value.status !== "draft" && value.status !== "published" ? "status must be draft or published" : null),
 };
 
 export function validateDataRecord(collection: string, value: unknown): ValidationResult<DataRecord> {
