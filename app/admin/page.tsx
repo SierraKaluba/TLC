@@ -2,48 +2,74 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, Database, Plus, Users } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BookOpen, CalendarDays, FolderKanban, Newspaper, Users } from "lucide-react";
 
-type Contributor = { id: string; name: string; github: string; avatar?: string };
+type RecordItem = { id?: string; title?: string; name?: string; excerpt?: string; status?: string };
+type CollectionKey = "contributors" | "projects" | "events" | "resources" | "news";
+const sections: { key: CollectionKey; title: string; description: string; href: string; icon: typeof Users }[] = [
+  { key: "contributors", title: "Contributeurs", description: "Profils et liens visibles dans l'annuaire.", href: "/admin/data/contributors", icon: Users },
+  { key: "projects", title: "Projets", description: "Fiches de projets et suivi des travaux.", href: "/admin/data/projects", icon: FolderKanban },
+  { key: "events", title: "Evenements", description: "Agenda public et rendez-vous de TLC.", href: "/admin/data/events", icon: CalendarDays },
+  { key: "resources", title: "Publications", description: "Catalogue public, ressources et tllib.", href: "/admin/data/resources", icon: BookOpen },
+  { key: "news", title: "Actualites", description: "Articles publies et brouillons du blog.", href: "/admin/data/news", icon: Newspaper },
+];
 
 export default function AdminHome() {
-  const [items, setItems] = useState<Contributor[]>([]);
+  const [collections, setCollections] = useState<Record<CollectionKey, RecordItem[]>>({
+    contributors: [], projects: [], events: [], resources: [], news: [],
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/contributors", { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : [])
-      .then((data: Contributor[]) => setItems(Array.isArray(data) ? data : []))
-      .catch(() => setItems([]))
-      .finally(() => setLoading(false));
+    let active = true;
+    Promise.all(sections.map(async ({ key }) => {
+      try {
+        const response = await fetch("/api/data/" + key, { cache: "no-store" });
+        const data = response.ok ? await response.json() : [];
+        return [key, Array.isArray(data) ? data as RecordItem[] : []] as const;
+      } catch { return [key, []] as const; }
+    })).then((results) => {
+      if (active) setCollections(Object.fromEntries(results) as Record<CollectionKey, RecordItem[]>);
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
+
+  const metrics = [
+    { key: "contributors" as const, label: "Contributeurs", icon: Users, href: "/admin/data/contributors" },
+    { key: "projects" as const, label: "Projets", icon: FolderKanban, href: "/admin/data/projects" },
+    { key: "events" as const, label: "Evenements", icon: CalendarDays, href: "/admin/data/events" },
+    { key: "resources" as const, label: "Publications", icon: BookOpen, href: "/admin/data/resources" },
+  ];
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#d4af37]">TLC · Administration</p><h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Vue d’ensemble</h1><p className="mt-2 max-w-xl text-sm text-slate-400">Gérez les contenus et les personnes qui font vivre la plateforme.</p></div>
-        <Link href="/admin/contributors" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#d4af37] px-4 py-2.5 text-sm font-semibold text-[#14110a] transition hover:bg-[#efd779]"><Plus size={16} />Ajouter un contributeur</Link>
-      </div>
-
-      <section className="grid gap-4 sm:grid-cols-2">
-        <article className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#10233a] to-[#0c1929] p-5 sm:p-6">
-          <div className="flex items-start justify-between"><div className="rounded-xl bg-[#d4af37]/10 p-2.5 text-[#e8c96d]"><Users size={20} /></div><span className="rounded-full border border-emerald-300/15 bg-emerald-300/[0.07] px-2.5 py-1 text-[11px] text-emerald-200">Page publique</span></div>
-          <div className="mt-6 text-sm text-slate-400">Contributeurs affichés</div><div className="mt-1 text-4xl font-semibold tracking-tight text-white">{loading ? <span className="inline-block h-10 w-12 animate-pulse rounded bg-white/10" /> : items.length}</div>
-          <Link href="/admin/contributors" className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[#e8c96d] hover:text-[#f4df9e]">Gérer les contributeurs <ArrowRight size={15} /></Link>
-        </article>
-        <article className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#10233a] to-[#0c1929] p-5 sm:p-6">
-          <div className="flex items-start justify-between"><div className="rounded-xl bg-sky-300/10 p-2.5 text-sky-200"><Database size={20} /></div><span className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] text-slate-400">8 collections</span></div>
-          <div className="mt-6 text-sm text-slate-400">Contenus de la plateforme</div><div className="mt-1 text-2xl font-semibold tracking-tight text-white">Données centralisées</div>
-          <Link href="/admin/data" className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-sky-200 hover:text-sky-100">Parcourir les collections <ArrowRight size={15} /></Link>
-        </article>
+      <section className="flex flex-col justify-between gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-end sm:p-7">
+        <div><p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#9a7427]">TLC / Administration</p><h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">Vue d&#8217;ensemble</h1><p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">Pilotez les contenus qui alimentent les pages publiques de TLC.</p></div>
+        <Link href="/home" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#d4af37] px-4 py-3 text-sm font-semibold text-[#1a160d] transition hover:bg-[#e2c260]">Voir le site <ArrowUpRight size={16} /></Link>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b1827]">
-        <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4 sm:px-6"><div><h2 className="font-semibold text-white">Contributeurs de la plateforme</h2><p className="mt-1 text-xs text-slate-500">La même liste que celle affichée sur l’accueil</p></div><Link href="/admin/contributors" className="text-xs font-medium text-[#e8c96d] hover:text-[#f4df9e]">Tout voir</Link></div>
-        <div className="grid gap-px bg-white/[0.06] sm:grid-cols-2 xl:grid-cols-3">
-          {loading ? Array.from({ length: 6 }, (_, i) => <div key={i} className="flex items-center gap-3 bg-[#0b1827] p-4"><div className="h-10 w-10 animate-pulse rounded-full bg-white/10" /><div className="h-3 w-32 animate-pulse rounded bg-white/10" /></div>) : items.slice(0, 6).map((item) => <div key={item.id} className="flex min-w-0 items-center gap-3 bg-[#0b1827] p-4"><img src={item.avatar || `${item.github.replace(/\/$/, "")}.png`} alt="" className="h-10 w-10 rounded-full border border-white/10 object-cover" /><div className="min-w-0"><div className="truncate text-sm font-medium text-slate-200">{item.name}</div><div className="truncate text-xs text-slate-500">{item.github.replace(/^https?:\/\/(www\.)?github.com\//, "")}</div></div></div>)}
-          {!loading && items.length === 0 && <p className="col-span-full px-5 py-10 text-center text-sm text-slate-500">Aucun contributeur pour le moment.</p>}
+      <section aria-label="Indicateurs du site" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map(({ key, label, icon: Icon, href }) => <Link key={key} href={href} className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md">
+          <div className="flex items-center justify-between"><span className="grid h-10 w-10 place-items-center rounded-xl bg-amber-50 text-[#9a7427]"><Icon size={19} /></span><ArrowUpRight size={16} className="text-slate-300 group-hover:text-[#9a7427]" /></div>
+          <p className="mt-5 text-sm font-medium text-slate-500">{label}</p><p className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">{loading ? <span className="inline-block h-9 w-12 animate-pulse rounded bg-slate-100" /> : collections[key].length}</p>
+          <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-[#80601c]">Gerer {label.toLowerCase()} <ArrowRight size={14} /></span>
+        </Link>)}
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(300px,.75fr)]">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-5 flex items-end justify-between gap-3"><div><p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#9a7427]">Acces direct</p><h2 className="mt-1 text-lg font-semibold text-slate-900">Gestion du site</h2></div><Link href="/admin/data" className="text-xs font-semibold text-[#80601c] hover:underline">Toutes les collections</Link></div>
+          <div className="divide-y divide-slate-100">
+            {sections.map(({ key, title, description, href, icon: Icon }) => <Link key={key} href={href} className="flex items-center gap-3 py-3.5 first:pt-0 last:pb-0">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-50 text-slate-600"><Icon size={18} /></span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-slate-800">{title}</span><span className="mt-0.5 block text-xs text-slate-500">{description}</span></span><span className="text-xs font-medium text-slate-500">{loading ? "..." : collections[key].length}</span><ArrowRight size={15} className="text-slate-300" />
+            </Link>)}
+          </div>
         </div>
+
+        <aside className="rounded-2xl border border-amber-200 bg-[#fffdf7] p-5 sm:p-6">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#9a7427]">Publication</p><h2 className="mt-2 text-lg font-semibold text-slate-900">Actualites TLC</h2><p className="mt-2 text-sm leading-6 text-slate-600">Redigez une nouvelle, enregistrez-la en brouillon, puis publiez-la sur le blog.</p>
+          <div className="mt-5 flex items-center justify-between border-t border-amber-100 pt-4"><span className="text-sm text-slate-600">{loading ? "..." : collections.news.filter((item) => item.status === "published").length} publiees</span><Link href="/admin/data/news" className="inline-flex items-center gap-2 rounded-lg bg-[#d4af37] px-3 py-2 text-xs font-semibold text-[#1a160d] hover:bg-[#e2c260]">Gerer <ArrowRight size={14} /></Link></div>
+        </aside>
       </section>
     </div>
   );
