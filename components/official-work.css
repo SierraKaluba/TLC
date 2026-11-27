@@ -28,3 +28,17 @@
 @media(max-width:730px){.tlc-official-work-grid,.tlc-voices-grid{grid-template-columns:1fr}.tlc-official-work-card,.tlc-voice-card{padding:24px}}
 
 .home-community-figures-date{margin:10px auto 0;max-width:1080px;padding:0 24px;text-align:center;color:var(--muted);font-size:12px;line-height:1.65}
+
+/* Compact, wider cards for the homepage Research & Products section. */
+.tlc-official-work .container{max-width:1400px;padding-left:20px;padding-right:20px}
+.tlc-official-work-grid{gap:16px;align-items:stretch}
+.tlc-official-work-card{padding:clamp(18px,1.8vw,24px);border-radius:18px}
+.tlc-official-work-card-top{margin-bottom:12px}
+.tlc-official-work-icon{width:52px;height:52px;border-radius:14px}
+.tlc-official-work-card h3{font-size:clamp(26px,2.25vw,31px);line-height:1.1;margin:6px 0 9px}
+.tlc-official-work-card p{font-size:16px;line-height:1.58;margin:0 0 12px}
+.tlc-official-work-tags{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:7px;margin-bottom:12px}
+.tlc-official-work-tags span{width:fit-content;max-width:100%;padding:6px 10px;font-size:12px}
+.tlc-official-work-link{font-size:15px;margin-top:auto}
+@media(max-width:1100px){.tlc-official-work .container{padding-left:24px;padding-right:24px}}
+@media(max-width:730px){.tlc-official-work-tags{grid-template-columns:1fr}.tlc-official-work-card{padding:22px}.tlc-official-work-card p{margin-bottom:14px}.tlc-official-work-tags{margin-bottom:14px}}
