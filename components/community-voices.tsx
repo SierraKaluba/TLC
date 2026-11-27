@@ -31,9 +31,9 @@ export default function CommunityVoices() {
           <h2 className="section-title" id="tlc-voices-title">Des raisons différentes de rejoindre TLC.</h2>
           <p className="section-copy">Recherche, programmation, études : chacun peut trouver une façon de participer aux travaux de la communauté.</p>
         </div>
-        <div className="tlc-voices-grid">
-          {voices.map(voice => (
-            <article className="tlc-voice-card" key={voice.name}>
+        <div className="tlc-voices-window"><div className="tlc-voices-track">
+          {[...voices, ...voices].map((voice, index) => (
+            <article className="tlc-voice-card" key={`${voice.name}-${index}`} aria-hidden={index >= voices.length}>
               <Quote size={25} aria-hidden="true" className="tlc-voice-quote-icon" />
               <blockquote>« {voice.text} »</blockquote>
               <div className="tlc-voice-person">
@@ -42,7 +42,7 @@ export default function CommunityVoices() {
               </div>
             </article>
           ))}
-        </div>
+        </div></div>
         <p className="tlc-voices-note">Témoignages fictifs illustrant différents profils de participation.</p>
       </div>
     </section>

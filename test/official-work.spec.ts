@@ -13,7 +13,7 @@ describe("Trois projets publics de TLC", () => {
       "/resources/tllib",
       "/tl-studio",
     ]);
-    expect(officialWork.some(item => item.name === "Portail TLC")).toBe(false);
+    expect(officialWork.some(item => String(item.name) === "Portail TLC")).toBe(false);
     expect(officialWork.every(item => item.description.length > 65)).toBe(true);
   });
 
