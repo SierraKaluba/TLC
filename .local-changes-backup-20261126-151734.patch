@@ -1,0 +1,866 @@
+﻿diff --git a/.env.example b/.env.example
+index a57126f..2858c44 100644
+--- a/.env.example
++++ b/.env.example
+@@ -1,3 +1,7 @@
+ # Required for the server-side admin login. Never expose these as NEXT_PUBLIC_* variables.
+ ADMIN_PASSWORD=change-this-password
+ ADMIN_SESSION_SECRET=change-this-to-a-long-random-secret
++
++# Optional locally; required on Vercel for persistent application data.
++TURSO_DATABASE_URL=libsql://your-database-your-org.turso.io
++TURSO_AUTH_TOKEN=your-turso-auth-token
+diff --git a/README.md b/README.md
+index cb060c6..fb3a08a 100644
+--- a/README.md
++++ b/README.md
+@@ -164,6 +164,17 @@ Projet open-source (licence à définir)
+ 
+ **“Construire ensemble l’intelligence de demain.”**
+ 
++## Deploying with Turso on Vercel
++
++The app uses the local `.data/tlc.sqlite` file for development. On Vercel, it connects to a persistent Turso database instead.
++
++1. Create a Turso database and generate an authentication token in the Turso dashboard.
++2. Add `TURSO_DATABASE_URL` (the database URL) and `TURSO_AUTH_TOKEN` (the token) to the Vercel project's Production and Preview environment variables.
++3. Keep `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` configured in Vercel as well.
++4. Redeploy. On its first request, the app creates the tables and seeds them from the JSON files in `data/`.
++
++For local development, leave the Turso variables unset to keep using `.data/tlc.sqlite`.
++
+ 
+ pnpm dev      # Démarrer le serveur de développement
+ pnpm build    # Compiler le projet
+diff --git a/app/api/contributors/route.ts b/app/api/contributors/route.ts
+index 17c47da..210f152 100644
+--- a/app/api/contributors/route.ts
++++ b/app/api/contributors/route.ts
+@@ -5,7 +5,7 @@ import { isAdminRequest, unauthorizedResponse } from "@/lib/admin-auth";
+ import type { Contributor } from "@/lib/types";
+ 
+ export async function GET() {
+-  return NextResponse.json(readCollection<Contributor>("contributors"));
++  return NextResponse.json(await readCollection<Contributor>("contributors"));
+ }
+ 
+ export async function POST(request: Request) {
+@@ -14,7 +14,7 @@ export async function POST(request: Request) {
+   if (!body || typeof body.name !== "string" || typeof body.github !== "string") {
+     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+   }
+-  const contributor = appendRecord<Contributor>("contributors", {
++  const contributor = await appendRecord<Contributor>("contributors", {
+     id: randomUUID(),
+     name: body.name.trim(),
+     github: body.github.trim(),
+@@ -29,10 +29,10 @@ export async function PUT(request: Request) {
+   if (!body || typeof body.id !== "string") {
+     return NextResponse.json({ error: "Missing id" }, { status: 400 });
+   }
+-  const current = readCollection<Contributor>("contributors").find((item) => item.id === body.id);
++  const current = (await readCollection<Contributor>("contributors")).find((item) => item.id === body.id);
+   if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
+   const updated = { ...current, ...body } as Contributor;
+-  updateRecord("contributors", updated);
++  await updateRecord("contributors", updated);
+   return NextResponse.json(updated);
+ }
+ 
+@@ -40,6 +40,6 @@ export async function DELETE(request: Request) {
+   if (!isAdminRequest(request)) return unauthorizedResponse();
+   const id = new URL(request.url).searchParams.get("id");
+   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+-  deleteRecord("contributors", id);
++  await deleteRecord("contributors", id);
+   return NextResponse.json({ success: true });
+ }
+diff --git a/app/api/data/[type]/route.ts b/app/api/data/[type]/route.ts
+index 7a43b52..20fb598 100644
+--- a/app/api/data/[type]/route.ts
++++ b/app/api/data/[type]/route.ts
+@@ -1,8 +1,9 @@
+ import { NextRequest, NextResponse } from "next/server";
+ import { randomUUID } from "node:crypto";
+ import {
++  appendRecord,
+   deleteRecord,
+-  getDatabase,
++  insertRecords,
+   readCollection,
+   updateRecord,
+ } from "@/lib/database";
+@@ -23,7 +24,7 @@ async function resolveType(context: RouteContext) {
+ export async function GET(_request: NextRequest, context: RouteContext) {
+   const type = await resolveType(context);
+   if (!type) return NextResponse.json({ error: "Unknown data type" }, { status: 404 });
+-  return NextResponse.json(readCollection<DataRecord>(type));
++  return NextResponse.json(await readCollection<DataRecord>(type));
+ }
+ 
+ export async function POST(request: NextRequest, context: RouteContext) {
+@@ -45,21 +46,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
+     });
+     if (errors.length) return NextResponse.json({ error: "Some rows are invalid", details: errors.slice(0, 20) }, { status: 400 });
+ 
+-    const insert = getDatabase().prepare(
+-      "INSERT INTO records (collection, id, data) VALUES (?, ?, ?)",
+-    );
+-    getDatabase().transaction(() => {
+-      for (const record of records) insert.run(type, record.id, JSON.stringify(record));
+-    })();
++    await insertRecords(type, records as Array<DataRecord & { id: string }>);
+     return NextResponse.json({ imported: records.length }, { status: 201 });
+   }
+ 
+   const validation = validateDataRecord(type, body);
+   if (!validation.ok) return NextResponse.json({ error: validation.error }, { status: 400 });
+-  const item = { ...validation.value, id: randomUUID() };
+-  getDatabase()
+-    .prepare("INSERT INTO records (collection, id, data) VALUES (?, ?, ?)")
+-    .run(type, item.id, JSON.stringify(item));
++  const item = await appendRecord(type, { ...validation.value, id: randomUUID() }, type);
+   return NextResponse.json(item, { status: 201 });
+ }
+ 
+@@ -72,7 +65,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
+   const validation = validateDataRecord(type, body);
+   if (!validation.ok) return NextResponse.json({ error: validation.error }, { status: 400 });
+   if (typeof validation.value.id !== "string") return NextResponse.json({ error: "Missing id" }, { status: 400 });
+-  const updated = updateRecord(type, validation.value as { id: string });
++  const updated = await updateRecord(type, validation.value as { id: string });
+   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+   return NextResponse.json(validation.value);
+ }
+@@ -84,6 +77,6 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
+ 
+   const id = new URL(request.url).searchParams.get("id");
+   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+-  if (!deleteRecord(type, id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
++  if (!await deleteRecord(type, id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
+   return NextResponse.json({ success: true });
+ }
+diff --git a/app/api/profiles/route.ts b/app/api/profiles/route.ts
+index db5f4fd..197e038 100644
+--- a/app/api/profiles/route.ts
++++ b/app/api/profiles/route.ts
+@@ -4,7 +4,7 @@ import { isAdminRequest, unauthorizedResponse } from "@/lib/admin-auth";
+ import type { Profile } from "@/lib/types";
+ 
+ export async function GET() {
+-  return NextResponse.json(readCollection<Profile>("profiles"));
++  return NextResponse.json(await readCollection<Profile>("profiles"));
+ }
+ 
+ export async function PATCH(request: Request) {
+@@ -13,9 +13,9 @@ export async function PATCH(request: Request) {
+   if (!body || typeof body.id !== "string") {
+     return NextResponse.json({ error: "Missing id" }, { status: 400 });
+   }
+-  const current = readCollection<Profile>("profiles").find((profile) => profile.id === body.id);
++  const current = (await readCollection<Profile>("profiles")).find((profile) => profile.id === body.id);
+   if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
+   const updated = { ...current, ...body } as Profile;
+-  updateRecord("profiles", updated);
++  await updateRecord("profiles", updated);
+   return NextResponse.json(updated);
+ }
+diff --git a/app/api/projects/[id]/route.ts b/app/api/projects/[id]/route.ts
+index b998713..c482d4f 100644
+--- a/app/api/projects/[id]/route.ts
++++ b/app/api/projects/[id]/route.ts
+@@ -6,7 +6,7 @@ type Context = { params: Promise<{ id: string }> };
+ 
+ export async function GET(_request: Request, context: Context) {
+   const { id } = await context.params;
+-  const project = getProject(id);
++  const project = await getProject(id);
+   if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
+   return NextResponse.json(project);
+ }
+@@ -14,21 +14,21 @@ export async function GET(_request: Request, context: Context) {
+ export async function PUT(request: Request, context: Context) {
+   if (!isAdminRequest(request)) return unauthorizedResponse();
+   const { id } = await context.params;
+-  const current = getProject(id);
++  const current = await getProject(id);
+   if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
+   const body = await request.json().catch(() => null);
+   if (!body || typeof body !== "object") {
+     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+   }
+-  const updated = saveProject({ ...current, ...body, id });
++  const updated = await saveProject({ ...current, ...body, id });
+   return NextResponse.json(updated);
+ }
+ 
+ export async function DELETE(request: Request, context: Context) {
+   if (!isAdminRequest(request)) return unauthorizedResponse();
+   const { id } = await context.params;
+-  const project = getProject(id);
++  const project = await getProject(id);
+   if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
+-  removeProject(id);
++  await removeProject(id);
+   return NextResponse.json({ removed: project });
+ }
+diff --git a/app/api/projects/[id]/tasks/[taskId]/route.ts b/app/api/projects/[id]/tasks/[taskId]/route.ts
+index 1b96f84..eaf4bb7 100644
+--- a/app/api/projects/[id]/tasks/[taskId]/route.ts
++++ b/app/api/projects/[id]/tasks/[taskId]/route.ts
+@@ -7,25 +7,25 @@ type Context = { params: Promise<{ id: string; taskId: string }> };
+ export async function PUT(request: Request, context: Context) {
+   if (!isAdminRequest(request)) return unauthorizedResponse();
+   const { id, taskId } = await context.params;
+-  const project = getProject(id);
++  const project = await getProject(id);
+   if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+   const task = project.tasks.find((item) => item.id === taskId);
+   if (!task) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+   const body = await request.json().catch(() => null);
+   if (body && typeof body.done === "boolean") task.done = body.done;
+   if (body && typeof body.title === "string" && body.title.trim()) task.title = body.title.trim();
+-  saveProject(project);
++  await saveProject(project);
+   return NextResponse.json(task);
+ }
+ 
+ export async function DELETE(request: Request, context: Context) {
+   if (!isAdminRequest(request)) return unauthorizedResponse();
+   const { id, taskId } = await context.params;
+-  const project = getProject(id);
++  const project = await getProject(id);
+   if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+   const index = project.tasks.findIndex((item) => item.id === taskId);
+   if (index === -1) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+   const [removed] = project.tasks.splice(index, 1);
+-  saveProject(project);
++  await saveProject(project);
+   return NextResponse.json({ removed });
+ }
+diff --git a/app/api/projects/[id]/tasks/route.ts b/app/api/projects/[id]/tasks/route.ts
+index 8189f5a..48640d9 100644
+--- a/app/api/projects/[id]/tasks/route.ts
++++ b/app/api/projects/[id]/tasks/route.ts
+@@ -8,13 +8,13 @@ type Context = { params: Promise<{ id: string }> };
+ export async function POST(request: Request, context: Context) {
+   if (!isAdminRequest(request)) return unauthorizedResponse();
+   const { id } = await context.params;
+-  const project = getProject(id);
++  const project = await getProject(id);
+   if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+   const body = await request.json().catch(() => null);
+   if (!body || typeof body.title !== "string" || !body.title.trim()) {
+     return NextResponse.json({ error: "title required" }, { status: 400 });
+   }
+   const task = { id: `task-${randomUUID()}`, title: body.title.trim(), done: false };
+-  saveProject({ ...project, tasks: [...project.tasks, task] });
++  await saveProject({ ...project, tasks: [...project.tasks, task] });
+   return NextResponse.json(task, { status: 201 });
+ }
+diff --git a/app/api/projects/route.ts b/app/api/projects/route.ts
+index e3cb03a..8f1f1cb 100644
+--- a/app/api/projects/route.ts
++++ b/app/api/projects/route.ts
+@@ -3,7 +3,7 @@ import { getProjects, saveProject, type Project } from "@/lib/project-store";
+ import { isAdminRequest, unauthorizedResponse } from "@/lib/admin-auth";
+ 
+ export async function GET() {
+-  return NextResponse.json(getProjects());
++  return NextResponse.json(await getProjects());
+ }
+ 
+ export async function POST(request: Request) {
+@@ -18,6 +18,6 @@ export async function POST(request: Request) {
+     members: Array.isArray(body.members) ? body.members : [],
+     tasks: Array.isArray(body.tasks) ? body.tasks : [],
+   };
+-  const created = saveProject(project);
++  const created = await saveProject(project);
+   return NextResponse.json(created, { status: 201 });
+ }
+diff --git a/app/home/page.tsx b/app/home/page.tsx
+index b1ad498..398087b 100644
+--- a/app/home/page.tsx
++++ b/app/home/page.tsx
+@@ -10,8 +10,8 @@ import resources from "@/data/resources.json"
+ 
+ export const dynamic = "force-dynamic"
+ 
+-const HomePage = () => {
+-  const contributors = readCollection<Contributor>("contributors")
++const HomePage = async () => {
++  const contributors = await readCollection<Contributor>("contributors")
+   return (
+     <div className="home-hero-bg">
+       <HeroSection
+diff --git a/lib/database.ts b/lib/database.ts
+index 5032582..4083a64 100644
+--- a/lib/database.ts
++++ b/lib/database.ts
+@@ -1,15 +1,106 @@
+ import Database from "better-sqlite3";
++import { createClient, type Client } from "@libsql/client";
+ import fs from "node:fs";
+ import path from "node:path";
+ import { randomUUID } from "node:crypto";
+-
+-type StoredRecord = { id: string; collection: string; data: string };
++import contributorsSeed from "../data/contributors.json";
++import discussionsSeed from "../data/discussions.json";
++import eventsSeed from "../data/events.json";
++import experimentsSeed from "../data/experiments.json";
++import openCallsSeed from "../data/open-calls.json";
++import profilesSeed from "../data/profiles.json";
++import projectsSeed from "../data/projects.json";
++import resourcesSeed from "../data/resources.json";
++import undefinedSeed from "../data/undefined.json";
+ 
+ const databaseDirectory = path.join(process.cwd(), ".data");
+ const databasePath = path.join(databaseDirectory, "tlc.sqlite");
+ const sourceDirectory = path.join(process.cwd(), "data");
++const seedCollections: Record<string, unknown[]> = {
++  contributors: contributorsSeed,
++  discussions: discussionsSeed,
++  events: eventsSeed,
++  experiments: experimentsSeed,
++  "open-calls": openCallsSeed,
++  profiles: profilesSeed,
++  projects: projectsSeed,
++  resources: resourcesSeed,
++  undefined: undefinedSeed,
++};
+ 
+ let database: Database.Database | undefined;
++let remoteClient: Client | undefined;
++let remoteReady: Promise<void> | undefined;
++
++function getRemoteClient() {
++  const url = process.env.TURSO_DATABASE_URL;
++  const authToken = process.env.TURSO_AUTH_TOKEN;
++  if (!url || !authToken) {
++    throw new Error("Turso is not configured. Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.");
++  }
++  remoteClient ??= createClient({ url, authToken });
++  return remoteClient;
++}
++
++function isRemoteDatabase() {
++  if (process.env.TURSO_DATABASE_URL) return true;
++  if (process.env.VERCEL) {
++    throw new Error("Turso is required on Vercel. Configure TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.");
++  }
++  return false;
++}
++
++async function initializeRemoteDatabase() {
++  const client = getRemoteClient();
++  await client.batch([
++    `CREATE TABLE IF NOT EXISTS records (
++      collection TEXT NOT NULL,
++      id TEXT NOT NULL,
++      data TEXT NOT NULL,
++      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
++      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
++      PRIMARY KEY (collection, id)
++    )`,
++    `CREATE TABLE IF NOT EXISTS data_migrations (
++      name TEXT PRIMARY KEY,
++      completed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
++    )`,
++  ], "write");
++
++  const migration = await client.execute({
++    sql: "SELECT 1 FROM data_migrations WHERE name = ?",
++    args: ["json-seed-v1"],
++  });
++  if (migration.rows.length) return;
++
++  const statements: Array<{ sql: string; args: Array<string> }> = [];
++  for (const [collection, items] of Object.entries(seedCollections)) {
++    for (const item of items) {
++      if (!item || typeof item !== "object") continue;
++      const record = item as { id?: unknown };
++      const id = typeof record.id === "string" ? record.id : randomUUID();
++      statements.push({
++        sql: "INSERT OR IGNORE INTO records (collection, id, data) VALUES (?, ?, ?)",
++        args: [collection, id, JSON.stringify({ ...item, id })],
++      });
++    }
++  }
++  statements.push({
++    sql: "INSERT OR IGNORE INTO data_migrations (name) VALUES (?)",
++    args: ["json-seed-v1"],
++  });
++  await client.batch(statements, "write");
++}
++
++async function ensureRemoteDatabase() {
++  remoteReady ??= initializeRemoteDatabase();
++  try {
++    await remoteReady;
++  } catch (error) {
++    remoteReady = undefined;
++    throw error;
++  }
++}
+ 
+ function migrateJsonData(db: Database.Database) {
+   const insert = db.prepare(
+@@ -146,7 +237,15 @@ export function getDatabase() {
+   return database;
+ }
+ 
+-export function readCollection<T>(collection: string): T[] {
++export async function readCollection<T>(collection: string): Promise<T[]> {
++  if (isRemoteDatabase()) {
++    await ensureRemoteDatabase();
++    const result = await getRemoteClient().execute({
++      sql: "SELECT data FROM records WHERE collection = ? ORDER BY rowid",
++      args: [collection],
++    });
++    return result.rows.map((row) => JSON.parse(String(row.data)) as T);
++  }
+   const rows = getDatabase()
+     .prepare("SELECT data FROM records WHERE collection = ? ORDER BY rowid")
+     .all(collection) as Array<{ data: string }>;
+@@ -159,20 +258,53 @@ export function closeDatabase() {
+   database = undefined;
+ }
+ 
+-export function appendRecord<T extends { id?: string }>(
++export async function appendRecord<T extends { id?: string }>(
+   collection: string,
+   item: T,
+   idPrefix: string,
+ ) {
+   const id = item.id ?? `${idPrefix}-${randomUUID()}`;
+   const record = { ...item, id } as T & { id: string };
+-  getDatabase()
+-    .prepare("INSERT INTO records (collection, id, data) VALUES (?, ?, ?)")
+-    .run(collection, id, JSON.stringify(record));
++  if (isRemoteDatabase()) {
++    await ensureRemoteDatabase();
++    await getRemoteClient().execute({
++      sql: "INSERT INTO records (collection, id, data) VALUES (?, ?, ?)",
++      args: [collection, id, JSON.stringify(record)],
++    });
++  } else {
++    getDatabase()
++      .prepare("INSERT INTO records (collection, id, data) VALUES (?, ?, ?)")
++      .run(collection, id, JSON.stringify(record));
++  }
+   return record;
+ }
+ 
+-export function updateRecord<T extends { id: string }>(collection: string, item: T) {
++export async function insertRecords<T extends { id: string }>(collection: string, items: T[]) {
++  if (isRemoteDatabase()) {
++    await ensureRemoteDatabase();
++    await getRemoteClient().batch(items.map((item) => ({
++      sql: "INSERT INTO records (collection, id, data) VALUES (?, ?, ?)",
++      args: [collection, item.id, JSON.stringify(item)],
++    })), "write");
++    return;
++  }
++  const insert = getDatabase().prepare(
++    "INSERT INTO records (collection, id, data) VALUES (?, ?, ?)",
++  );
++  getDatabase().transaction(() => {
++    for (const item of items) insert.run(collection, item.id, JSON.stringify(item));
++  })();
++}
++
++export async function updateRecord<T extends { id: string }>(collection: string, item: T) {
++  if (isRemoteDatabase()) {
++    await ensureRemoteDatabase();
++    const result = await getRemoteClient().execute({
++      sql: "UPDATE records SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE collection = ? AND id = ?",
++      args: [JSON.stringify(item), collection, item.id],
++    });
++    return result.rowsAffected > 0;
++  }
+   const result = getDatabase()
+     .prepare(
+       "UPDATE records SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE collection = ? AND id = ?",
+@@ -181,7 +313,15 @@ export function updateRecord<T extends { id: string }>(collection: string, item:
+   return result.changes > 0;
+ }
+ 
+-export function deleteRecord(collection: string, id: string) {
++export async function deleteRecord(collection: string, id: string) {
++  if (isRemoteDatabase()) {
++    await ensureRemoteDatabase();
++    const result = await getRemoteClient().execute({
++      sql: "DELETE FROM records WHERE collection = ? AND id = ?",
++      args: [collection, id],
++    });
++    return result.rowsAffected > 0;
++  }
+   const result = getDatabase()
+     .prepare("DELETE FROM records WHERE collection = ? AND id = ?")
+     .run(collection, id);
+diff --git a/lib/project-store.ts b/lib/project-store.ts
+index 79a2434..f503cee 100644
+--- a/lib/project-store.ts
++++ b/lib/project-store.ts
+@@ -3,20 +3,20 @@ import type { Project } from "@/lib/types";
+ 
+ export type { ProjectTask, Project } from "@/lib/types";
+ 
+-export function getProjects() {
++export async function getProjects() {
+   return readCollection<Project>("projects");
+ }
+ 
+-export function getProject(id: string) {
+-  return getProjects().find((project) => project.id === id);
++export async function getProject(id: string) {
++  return (await getProjects()).find((project) => project.id === id);
+ }
+ 
+-export function saveProject(project: Project) {
++export async function saveProject(project: Project) {
+   if (!project.id) return appendRecord("projects", project, "proj");
+-  updateRecord("projects", project as Project & { id: string });
++  await updateRecord("projects", project as Project & { id: string });
+   return project;
+ }
+ 
+-export function removeProject(id: string) {
++export async function removeProject(id: string) {
+   return deleteRecord("projects", id);
+ }
+diff --git a/package.json b/package.json
+index 64888fb..71203ab 100644
+--- a/package.json
++++ b/package.json
+@@ -14,6 +14,7 @@
+     "backup": "node scripts/backup-database.mjs"
+   },
+   "dependencies": {
++    "@libsql/client": "^0.18.0",
+     "@mdx-js/loader": "^3.1.1",
+     "@mdx-js/react": "^3.1.1",
+     "@next/mdx": "^16.1.6",
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index aadd916..3660796 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -8,6 +8,9 @@ importers:
+ 
+   .:
+     dependencies:
++      '@libsql/client':
++        specifier: ^0.18.0
++        version: 0.18.0
+       '@mdx-js/loader':
+         specifier: ^3.1.1
+         version: 3.1.1
+@@ -556,6 +559,63 @@ packages:
+   '@jridgewell/trace-mapping@0.3.31':
+     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+ 
++  '@libsql/client@0.18.0':
++    resolution: {integrity: sha512-zMCCo58vv7w27j7+cnt/GW+X6/Rih6cHZ86PKi0AxCMOqMfrVgG9OZ5lW2bDMJhSeOjsv2szH2nJF3A9l36UmA==}
++
++  '@libsql/core@0.18.0':
++    resolution: {integrity: sha512-N8RR2CIpcgtbKZnXs2KVpw2lJQfinUj3I56e7qRDRpK18Hty0Rr8nr00VmFb4R/DsqOanPB/TaP3+QAQLZeXMg==}
++
++  '@libsql/darwin-arm64@0.5.29':
++    resolution: {integrity: sha512-K+2RIB1OGFPYQbfay48GakLhqf3ArcbHqPFu7EZiaUcRgFcdw8RoltsMyvbj5ix2fY0HV3Q3Ioa/ByvQdaSM0A==}
++    cpu: [arm64]
++    os: [darwin]
++
++  '@libsql/darwin-x64@0.5.29':
++    resolution: {integrity: sha512-OtT+KFHsKFy1R5FVadr8FJ2Bb1mghtXTyJkxv0trocq7NuHntSki1eUbxpO5ezJesDvBlqFjnWaYYY516QNLhQ==}
++    cpu: [x64]
++    os: [darwin]
++
++  '@libsql/hrana-client@0.10.0':
++    resolution: {integrity: sha512-OoA4EMqRAC7kn7V2P6EQqRcpZf2W+AjsNIyCizBg339Tq/aMC7sRnzs3SklderhmQWAqEzvv8A2vhxVmWpkVvw==}
++
++  '@libsql/isomorphic-ws@0.1.5':
++    resolution: {integrity: sha512-DtLWIH29onUYR00i0GlQ3UdcTRC6EP4u9w/h9LxpUZJWRMARk6dQwZ6Jkd+QdwVpuAOrdxt18v0K2uIYR3fwFg==}
++
++  '@libsql/linux-arm-gnueabihf@0.5.29':
++    resolution: {integrity: sha512-CD4n4zj7SJTHso4nf5cuMoWoMSS7asn5hHygsDuhRl8jjjCTT3yE+xdUvI4J7zsyb53VO5ISh4cwwOtf6k2UhQ==}
++    cpu: [arm]
++    os: [linux]
++
++  '@libsql/linux-arm-musleabihf@0.5.29':
++    resolution: {integrity: sha512-2Z9qBVpEJV7OeflzIR3+l5yAd4uTOLxklScYTwpZnkm2vDSGlC1PRlueLaufc4EFITkLKXK2MWBpexuNJfMVcg==}
++    cpu: [arm]
++    os: [linux]
++
++  '@libsql/linux-arm64-gnu@0.5.29':
++    resolution: {integrity: sha512-gURBqaiXIGGwFNEaUj8Ldk7Hps4STtG+31aEidCk5evMMdtsdfL3HPCpvys+ZF/tkOs2MWlRWoSq7SOuCE9k3w==}
++    cpu: [arm64]
++    os: [linux]
++
++  '@libsql/linux-arm64-musl@0.5.29':
++    resolution: {integrity: sha512-fwgYZ0H8mUkyVqXZHF3mT/92iIh1N94Owi/f66cPVNsk9BdGKq5gVpoKO+7UxaNzuEH1roJp2QEwsCZMvBLpqg==}
++    cpu: [arm64]
++    os: [linux]
++
++  '@libsql/linux-x64-gnu@0.5.29':
++    resolution: {integrity: sha512-y14V0vY0nmMC6G0pHeJcEarcnGU2H6cm21ZceRkacWHvQAEhAG0latQkCtoS2njFOXiYIg+JYPfAoWKbi82rkg==}
++    cpu: [x64]
++    os: [linux]
++
++  '@libsql/linux-x64-musl@0.5.29':
++    resolution: {integrity: sha512-gquqwA/39tH4pFl+J9n3SOMSymjX+6kZ3kWgY3b94nXFTwac9bnFNMffIomgvlFaC4ArVqMnOZD3nuJ3H3VO1w==}
++    cpu: [x64]
++    os: [linux]
++
++  '@libsql/win32-x64-msvc@0.5.29':
++    resolution: {integrity: sha512-4/0CvEdhi6+KjMxMaVbFM2n2Z44escBRoEYpR+gZg64DdetzGnYm8mcNLcoySaDJZNaBd6wz5DNdgRmcI4hXcg==}
++    cpu: [x64]
++    os: [win32]
++
+   '@mdx-js/loader@3.1.1':
+     resolution: {integrity: sha512-0TTacJyZ9mDmY+VefuthVshaNIyCGZHJG2fMnGaDttCt8HmjUF7SizlHJpaCDoGnN635nK1wpzfpx/Xx5S4WnQ==}
+     peerDependencies:
+@@ -576,6 +636,9 @@ packages:
+   '@napi-rs/wasm-runtime@0.2.12':
+     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
+ 
++  '@neon-rs/load@0.0.4':
++    resolution: {integrity: sha512-kTPhdZyTQxB+2wpiRcFWrDcejc4JI6tkPuS7UZCG4l6Zvc5kU/gGQ/ozvHTh1XR5tS+UlfAfGuPajjzQjCiHCw==}
++
+   '@next/env@16.1.6':
+     resolution: {integrity: sha512-N1ySLuZjnAtN3kFnwhAwPvZah8RJxKasD7x1f8shFqhncnWZn4JMfg37diLNuoHsLAlrDfM3g4mawVdtAG8XLQ==}
+ 
+@@ -1640,6 +1703,9 @@ packages:
+   '@types/unist@3.0.3':
+     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
+ 
++  '@types/ws@8.18.2':
++    resolution: {integrity: sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w==}
++
+   '@typescript-eslint/eslint-plugin@8.54.0':
+     resolution: {integrity: sha512-hAAP5io/7csFStuOmR782YmTthKBJ9ND3WVL60hcOjvtGFb+HJxH4O5huAcmcZ9v9G8P+JETiZ/G1B8MALnWZQ==}
+     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+@@ -2090,6 +2156,10 @@ packages:
+     resolution: {integrity: sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA==}
+     engines: {node: '>=6'}
+ 
++  detect-libc@2.0.2:
++    resolution: {integrity: sha512-UX6sGumvvqSaXgdKGUsgZWqcUyIXZ/vZTrlRT/iobiKhGL0zL4d3osHj3uqllWJK+i+sixDS/3COVEOFbupFyw==}
++    engines: {node: '>=8'}
++
+   detect-libc@2.1.2:
+     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
+     engines: {node: '>=8'}
+@@ -2661,6 +2731,9 @@ packages:
+     resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
+     hasBin: true
+ 
++  js-base64@3.9.6:
++    resolution: {integrity: sha512-LjkzbLtU6Lx6fjXMYGEACEB7rdtqZtxkBe9aS1ZpDNUyWgUivw3yBEIhQ37OVygJYRt+C+9e9fVT8PpFzH2Hww==}
++
+   js-tokens@4.0.0:
+     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
+ 
+@@ -2712,6 +2785,11 @@ packages:
+     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
+     engines: {node: '>= 0.8.0'}
+ 
++  libsql@0.5.29:
++    resolution: {integrity: sha512-8lMP8iMgiBzzoNbAPQ59qdVcj6UaE/Vnm+fiwX4doX4Narook0a4GPKWBEv+CR8a1OwbfkgL18uBfBjWdF0Fzg==}
++    cpu: [x64, arm64, wasm32, arm]
++    os: [darwin, linux, win32]
++
+   lightningcss-android-arm64@1.30.2:
+     resolution: {integrity: sha512-BH9sEdOCahSgmkVhBLeU7Hc9DWeZ1Eb6wNS6Da8igvUwAe0sqROHddIlvU06q3WyXVEOYDZ6ykBZQnjTbmo4+A==}
+     engines: {node: '>= 12.0.0'}
+@@ -3160,6 +3238,9 @@ packages:
+     resolution: {integrity: sha512-Pdlw/oPxN+aXdmM9R00JVC9WVFoCLTKJvDVLgmJ+qAffBMxsV85l/Lu7sNx4zSzPyoL2euImuEwHhOXdEgNFZQ==}
+     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
+ 
++  promise-limit@2.7.0:
++    resolution: {integrity: sha512-7nJ6v5lnJsXwGprnGXga4wx6d1POjvi5Qmf1ivTRxTjH4Z/9Czja/UCMLVmB9N93GeWOU93XaFaEt6jbuoagNw==}
++
+   prop-types@15.8.1:
+     resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
+ 
+@@ -3721,6 +3802,18 @@ packages:
+     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
+     engines: {node: '>=0.10.0'}
+ 
++  ws@8.23.0:
++    resolution: {integrity: sha512-wCkmX8QMOrKjgO8HW2WyDbTSGeqkocxgDzS9iR79rEAexty6/2qzilx3Ag8Tqf9ykop3irLKle0MtVn5qjVnoQ==}
++    engines: {node: '>=10.0.0'}
++    peerDependencies:
++      bufferutil: ^4.0.1
++      utf-8-validate: '>=5.0.2'
++    peerDependenciesMeta:
++      bufferutil:
++        optional: true
++      utf-8-validate:
++        optional: true
++
+   yallist@3.1.1:
+     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
+ 
+@@ -4127,6 +4220,64 @@ snapshots:
+       '@jridgewell/resolve-uri': 3.1.2
+       '@jridgewell/sourcemap-codec': 1.5.5
+ 
++  '@libsql/client@0.18.0':
++    dependencies:
++      '@libsql/core': 0.18.0
++      '@libsql/hrana-client': 0.10.0
++      js-base64: 3.9.6
++      libsql: 0.5.29
++      promise-limit: 2.7.0
++    transitivePeerDependencies:
++      - bufferutil
++      - utf-8-validate
++
++  '@libsql/core@0.18.0':
++    dependencies:
++      js-base64: 3.9.6
++
++  '@libsql/darwin-arm64@0.5.29':
++    optional: true
++
++  '@libsql/darwin-x64@0.5.29':
++    optional: true
++
++  '@libsql/hrana-client@0.10.0':
++    dependencies:
++      '@libsql/isomorphic-ws': 0.1.5
++      js-base64: 3.9.6
++    transitivePeerDependencies:
++      - bufferutil
++      - utf-8-validate
++
++  '@libsql/isomorphic-ws@0.1.5':
++    dependencies:
++      '@types/ws': 8.18.2
++      ws: 8.23.0
++    transitivePeerDependencies:
++      - bufferutil
++      - utf-8-validate
++
++  '@libsql/linux-arm-gnueabihf@0.5.29':
++    optional: true
++
++  '@libsql/linux-arm-musleabihf@0.5.29':
++    optional: true
++
++  '@libsql/linux-arm64-gnu@0.5.29':
++    optional: true
++
++  '@libsql/linux-arm64-musl@0.5.29':
++    optional: true
++
++  '@libsql/linux-x64-gnu@0.5.29':
++    optional: true
++
++  '@libsql/linux-x64-musl@0.5.29':
++    optional: true
++
++  '@libsql/win32-x64-msvc@0.5.29':
++    optional: true
++
+   '@mdx-js/loader@3.1.1':
+     dependencies:
+       '@mdx-js/mdx': 3.1.1
+@@ -4177,6 +4328,8 @@ snapshots:
+       '@tybys/wasm-util': 0.10.1
+     optional: true
+ 
++  '@neon-rs/load@0.0.4': {}
++
+   '@next/env@16.1.6': {}
+ 
+   '@next/eslint-plugin-next@16.1.6':
+@@ -5178,6 +5331,10 @@ snapshots:
+ 
+   '@types/unist@3.0.3': {}
+ 
++  '@types/ws@8.18.2':
++    dependencies:
++      '@types/node': 20.19.31
++
+   '@typescript-eslint/eslint-plugin@8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)':
+     dependencies:
+       '@eslint-community/regexpp': 4.12.2
+@@ -5642,6 +5799,8 @@ snapshots:
+ 
+   dequal@2.0.3: {}
+ 
++  detect-libc@2.0.2: {}
++
+   detect-libc@2.1.2: {}
+ 
+   detect-node-es@1.1.0: {}
+@@ -6432,6 +6591,8 @@ snapshots:
+ 
+   jiti@2.6.1: {}
+ 
++  js-base64@3.9.6: {}
++
+   js-tokens@4.0.0: {}
+ 
+   js-tokens@9.0.1: {}
+@@ -6476,6 +6637,21 @@ snapshots:
+       prelude-ls: 1.2.1
+       type-check: 0.4.0
+ 
++  libsql@0.5.29:
++    dependencies:
++      '@neon-rs/load': 0.0.4
++      detect-libc: 2.0.2
++    optionalDependencies:
++      '@libsql/darwin-arm64': 0.5.29
++      '@libsql/darwin-x64': 0.5.29
++      '@libsql/linux-arm-gnueabihf': 0.5.29
++      '@libsql/linux-arm-musleabihf': 0.5.29
++      '@libsql/linux-arm64-gnu': 0.5.29
++      '@libsql/linux-arm64-musl': 0.5.29
++      '@libsql/linux-x64-gnu': 0.5.29
++      '@libsql/linux-x64-musl': 0.5.29
++      '@libsql/win32-x64-msvc': 0.5.29
++
+   lightningcss-android-arm64@1.30.2:
+     optional: true
+ 
+@@ -7089,6 +7265,8 @@ snapshots:
+       ansi-styles: 5.2.0
+       react-is: 18.3.1
+ 
++  promise-limit@2.7.0: {}
++
+   prop-types@15.8.1:
+     dependencies:
+       loose-envify: 1.4.0
+@@ -7883,6 +8061,8 @@ snapshots:
+ 
+   word-wrap@1.2.5: {}
+ 
++  ws@8.23.0: {}
++
+   yallist@3.1.1: {}
+ 
+   yocto-queue@0.1.0: {}
+diff --git a/scripts/test-database.cjs b/scripts/test-database.cjs
+index 416b96e..6a1d196 100644
+--- a/scripts/test-database.cjs
++++ b/scripts/test-database.cjs
+@@ -22,6 +22,10 @@ databaseModule.paths = Module._nodeModulePaths(path.dirname(databaseSourcePath))
+ databaseModule._compile(outputText, databaseSourcePath);
+ 
+ const { readCollection } = databaseModule.exports;
+-const profiles = readCollection("profiles");
+-assert.ok(profiles.some((profile) => profile.id === "user-alice"), "SQLite should include the seeded user-alice profile");
+-console.log("SQLite data layer test passed");
++readCollection("profiles").then((profiles) => {
++  assert.ok(profiles.some((profile) => profile.id === "user-alice"), "SQLite should include the seeded user-alice profile");
++  console.log("SQLite data layer test passed");
++}).catch((error) => {
++  console.error(error);
++  process.exitCode = 1;
++});
