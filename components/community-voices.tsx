@@ -6,15 +6,12 @@ const studentText = "\u00c0 l\u2019universit\u00e9, j\u2019ai surtout appris \u0
 const researchText = "Je voudrais travailler sur la partie scientifique : comprendre les relations entre les participants, les formaliser et pr\u00e9parer des exp\u00e9riences qui permettent de les \u00e9tudier.";
 
 const voices = [
-  { text: pythonText, name: "Kaluba", profile: "D\u00e9veloppeuse Python", initials: "K" },
-  { text: studentText, name: "Benwiz", profile: "Chercheur en informatique", initials: "B" },
-  { text: researchText, name: "Kasanga", profile: "Chercheur en IA", initials: "K" },
-  { text: pythonText, name: "Kasamba", profile: "D\u00e9veloppeuse Python", initials: "K" },
-  { text: studentText, name: "Ngala-Mulume", profile: "Chercheur en informatique", initials: "N" },
-  { text: researchText, name: "Mutombo", profile: "Chercheuse en IA", initials: "M" },
-  { text: pythonText, name: "Musobokwela", profile: "D\u00e9veloppeuse Python", initials: "M" },
-  { text: studentText, name: "Katombe", profile: "Chercheur en informatique", initials: "K" },
+  { text: pythonText, profile: "D\u00e9veloppeuse Python", initials: "K" },
+  { text: studentText, profile: "Chercheur en informatique", initials: "B" },
+  { text: researchText, profile: "Chercheur en IA", initials: "K" },
 ] as const;
+
+const people = ["Kaluba", "Benwiz", "Kasanga", "Kasamba", "Ngala-Mulume", "Mutombo", "Musobokwela", "Katombe"] as const;
 
 export default function CommunityVoices() {
   return (
@@ -26,20 +23,22 @@ export default function CommunityVoices() {
           <p className="section-copy">{"Recherche, programmation,\u00a0\u00e9tudes : chacun peut trouver une fa\u00e7on de participer aux travaux de la communaut\u00e9."}</p>
         </div>
         <div className="tlc-voices-window"><div className="tlc-voices-track">
-          {[...voices, ...voices].map((voice, index) => (
-            <article className="tlc-voice-card" key={`${voice.name}-${index}`} aria-hidden={index >= voices.length}>
-              <Quote size={25} aria-hidden="true" className="tlc-voice-quote-icon" />
-              <blockquote>{"\u00ab "}{voice.text}{" \u00bb"}</blockquote>
-              <div className="tlc-voice-person">
-                <span className="tlc-voice-initial" aria-hidden="true">{voice.initials}</span>
-                <div><strong>{voice.name}</strong><span>{voice.profile}</span></div>
-              </div>
-            </article>
-          ))}
+          {[...people, ...people].map((name, index) => {
+            const voice = voices[index % voices.length];
+            return (
+              <article className="tlc-voice-card" key={`${name}-${index}`} aria-hidden={index >= people.length}>
+                <Quote size={25} aria-hidden="true" className="tlc-voice-quote-icon" />
+                <blockquote>{"\u00ab "}{voice.text}{" \u00bb"}</blockquote>
+                <div className="tlc-voice-person">
+                  <span className="tlc-voice-initial" aria-hidden="true">{name.slice(0, 1)}</span>
+                  <div><strong>{name}</strong><span>{voice.profile}</span></div>
+                </div>
+              </article>
+            );
+          })}
         </div></div>
-        <p className="tlc-voices-note">{"T\u00e9moignages fictifs illustrant diff\u00e9rents profils de participation."}</p>
+        <p className="tlc-voices-note">Témoignages fictifs illustrant différents profils de participation.</p>
       </div>
     </section>
   );
 }
-
